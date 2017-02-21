@@ -11,3 +11,4 @@ To Do (Coming soon, on a daily basis)
 4.  Add Kafka binary compatible with this release of Kafka Stream this repo uses.
 5.  Data generation code.
 6.  Canned JSON files to run with examples.
+7.  Better description of this repo, how it's laid out and how to use source code.
