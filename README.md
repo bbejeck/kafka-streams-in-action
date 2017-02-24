@@ -3,6 +3,7 @@
 
 #### Requirements
 This project assumes and requires the following
+
 1. Java 8
 2. Gradle
 
@@ -72,5 +73,3 @@ When running the examples, the program will generate data to flow through Kafka 
 streams program.  The data generation occurs in the background.  The Kafka Streams programs will run for 
 approximately one minute each.  The sample programs write results to the console as well as topics.  While you
 are free to use the ConsoleConsumer or your own Consumer, it's much easier to view the results flowing to the console.
-
-
