@@ -16,11 +16,12 @@
 
 package bbejeck.chapter_3;
 
+import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
 import bbejeck.model.RewardAccumulator;
 import bbejeck.util.serde.StreamsSerdes;
-import bbejeck.service.SecurityDBService;
+import bbejeck.chapter_3.service.SecurityDBService;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -38,8 +39,10 @@ import java.util.Properties;
 
 public class ZMartKafkaStreamsAdvancedReqsApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
+        //Used only to produce data for this application, not typical usage
+        MockDataProducer.generatePurchaseData();
 
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
 
@@ -57,9 +60,16 @@ public class ZMartKafkaStreamsAdvancedReqsApp {
         KStream<String,Purchase> purchaseKStream = kStreamBuilder.stream(stringSerde, purchaseSerde, "transactions")
                 .mapValues(p -> Purchase.builder(p).maskCreditCard().build());
 
-        purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build()).to(stringSerde,purchasePatternSerde,"patterns");
+        KStream<String, PurchasePattern> patternKStream = purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build());
 
-        purchaseKStream.mapValues(purchase -> RewardAccumulator.builder(purchase).build()).to(stringSerde,rewardAccumulatorSerde,"rewards");
+        patternKStream.print(stringSerde, purchasePatternSerde, "patterns");
+        patternKStream.to(stringSerde,purchasePatternSerde,"patterns");
+
+
+        KStream<String, RewardAccumulator> rewardsKStream = purchaseKStream.mapValues(purchase -> RewardAccumulator.builder(purchase).build());
+
+        rewardsKStream.print(stringSerde,rewardAccumulatorSerde,"rewards");
+        rewardsKStream.to(stringSerde,rewardAccumulatorSerde,"rewards");
 
 
         /**
@@ -67,7 +77,11 @@ public class ZMartKafkaStreamsAdvancedReqsApp {
          */
 
         KeyValueMapper<String, Purchase, Long> purchaseDateAsKey = (key, purchase) -> purchase.getPurchaseDate().getTime();
-        purchaseKStream.filter((key, purchase) -> purchase.getPrice() > 5.00).selectKey(purchaseDateAsKey).to(Serdes.Long(),purchaseSerde,"purchases");
+
+        KStream<Long, Purchase> filteredKStream = purchaseKStream.filter((key, purchase) -> purchase.getPrice() > 5.00).selectKey(purchaseDateAsKey);
+
+        filteredKStream.print(Serdes.Long(),purchaseSerde,"purchases");
+        filteredKStream.to(Serdes.Long(),purchaseSerde,"purchases");
 
 
         /**
@@ -82,7 +96,10 @@ public class ZMartKafkaStreamsAdvancedReqsApp {
         KStream<String, Purchase>[] kstreamByDept = purchaseKStream.branch(isCoffee, isElectronics);
 
         kstreamByDept[coffee].to(stringSerde, purchaseSerde, "coffee");
+        kstreamByDept[coffee].print(stringSerde, purchaseSerde, "coffee");
+
         kstreamByDept[electronics].to(stringSerde, purchaseSerde, "electronics");
+        kstreamByDept[electronics].print(stringSerde, purchaseSerde, "electronics");
 
 
 
@@ -92,11 +109,17 @@ public class ZMartKafkaStreamsAdvancedReqsApp {
         ForeachAction<String, Purchase> purchaseForeachAction = (key, purchase) ->
                 SecurityDBService.saveRecord(purchase.getPurchaseDate(), purchase.getEmployeeId(), purchase.getItemPurchased());
 
-        purchaseKStream.filter((key, purchase) -> purchase.getEmployeeId().equals("1234567")).foreach(purchaseForeachAction);
+        
+        purchaseKStream.filter((key, purchase) -> purchase.getEmployeeId().equals("000000")).foreach(purchaseForeachAction);
 
 
         KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder,streamsConfig);
+        System.out.println("ZMart Advanced Requirements Kafka Streams Application Started");
         kafkaStreams.start();
+        Thread.sleep(65000);
+        System.out.println("Shutting down the Kafka Streams Application now");
+        kafkaStreams.close();
+        MockDataProducer.shutdown();
     }
 
 
@@ -108,6 +131,7 @@ public class ZMartKafkaStreamsAdvancedReqsApp {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "streams-purchases");
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "testing-streams-api");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"latest");
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
         props.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
         return props;

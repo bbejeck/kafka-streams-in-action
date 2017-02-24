@@ -17,6 +17,9 @@ import java.util.Properties;
  *
  * This class uses a ':' to split the key value pair entered on the command line.
  *
+ * In the book this class was used in the start of Chapter 5 to demonstrate difference in
+ * processing between a KTable and a KStream
+ *
  * To stop, type quit.
  */
 public class KeyValueMultiTopicConsoleProducer {

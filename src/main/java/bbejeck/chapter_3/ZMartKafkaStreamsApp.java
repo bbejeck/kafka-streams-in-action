@@ -16,6 +16,7 @@
 
 package bbejeck.chapter_3;
 
+import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
 import bbejeck.model.RewardAccumulator;
@@ -34,8 +35,11 @@ import java.util.Properties;
 
 public class ZMartKafkaStreamsApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
+
+        //Used only to produce data for this application, not typical usage
+        MockDataProducer.generatePurchaseData();
 
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
 
@@ -48,14 +52,31 @@ public class ZMartKafkaStreamsApp {
 
         KStream<String,Purchase> purchaseKStream = kStreamBuilder.stream(stringSerde, purchaseSerde, "transactions")
                 .mapValues(p -> Purchase.builder(p).maskCreditCard().build());
+        
+        KStream<String, PurchasePattern> patternKStream = purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build());
 
-        purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build()).to(stringSerde,purchasePatternSerde,"patterns");
+        patternKStream.print(stringSerde,purchasePatternSerde,"patterns");
+        patternKStream.to(stringSerde,purchasePatternSerde,"patterns");
 
-        purchaseKStream.mapValues(purchase -> RewardAccumulator.builder(purchase).build()).to(stringSerde,rewardAccumulatorSerde,"rewards");
+        
+        KStream<String, RewardAccumulator> rewardsKStream = purchaseKStream.mapValues(purchase -> RewardAccumulator.builder(purchase).build());
+
+        rewardsKStream.print(stringSerde,rewardAccumulatorSerde,"rewards");
+        rewardsKStream.to(stringSerde,rewardAccumulatorSerde,"rewards");
+
+
+
+        purchaseKStream.print(Serdes.String(),purchaseSerde,"purchases");
+        purchaseKStream.to(Serdes.String(),purchaseSerde,"purchases");
 
 
         KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder,streamsConfig);
+        System.out.println("ZMart First Kafka Streams Application Started");
         kafkaStreams.start();
+        Thread.sleep(65000);
+        System.out.println("Shutting down the Kafka Streams Application now");
+        kafkaStreams.close();
+        MockDataProducer.shutdown();
     }
 
 

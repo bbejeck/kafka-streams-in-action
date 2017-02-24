@@ -35,13 +35,13 @@ public class StreamsSerdes {
 
     private static final class RewardAccumulatorSerde extends WrapperSerde<RewardAccumulator> {
         private RewardAccumulatorSerde() {
-            super(new JsonSerializer<>(), new JsonDeserializer<>());
+            super(new JsonSerializer<>(), new JsonDeserializer<>(RewardAccumulator.class));
         }
     }
 
     private static final class PurchaseSerde extends WrapperSerde<Purchase> {
         private PurchaseSerde() {
-            super(new JsonSerializer<>(), new JsonDeserializer<>());
+            super(new JsonSerializer<>(), new JsonDeserializer<>(Purchase.class));
         }
     }
 

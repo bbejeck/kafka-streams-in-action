@@ -16,6 +16,7 @@
 
 package bbejeck.chapter_4;
 
+import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
 import bbejeck.model.RewardAccumulator;
@@ -29,14 +30,19 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.processor.StateStoreSupplier;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
+import org.apache.kafka.streams.state.Stores;
 
 import java.util.Properties;
 
 
 public class ZMartKafkaStreamsAddStateApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+
+        //Used only to produce data for this application, not typical usage
+        MockDataProducer.generatePurchaseData();
 
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
 
@@ -52,7 +58,12 @@ public class ZMartKafkaStreamsAddStateApp {
         KStream<String,Purchase> purchaseKStream = kStreamBuilder.stream(stringSerde, purchaseSerde, "transactions")
                 .mapValues(p -> Purchase.builder(p).maskCreditCard().build());
 
-        purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build()).to(stringSerde,purchasePatternSerde,"patterns");
+        KStream<String, PurchasePattern> patternKStream = purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build());
+
+        //Commented out to emphasize the adding of state to the rewards program
+        //patternKStream.print(stringSerde,purchasePatternSerde,"patterns");
+        //patternKStream.to(stringSerde,purchasePatternSerde,"patterns");
+
 
         /**
          *  Adding State to processor
@@ -62,14 +73,26 @@ public class ZMartKafkaStreamsAddStateApp {
         RewardsStreamPartitioner streamPartitioner = new RewardsStreamPartitioner();
         PurchaseRewardTransformer transformer = new PurchaseRewardTransformer(rewardsStateStoreName);
 
+        StateStoreSupplier stateStoreSupplier = Stores.create(rewardsStateStoreName).withStringKeys().withIntegerValues().inMemory().build();
+        kStreamBuilder.addStateStore(stateStoreSupplier);
 
         KStream<String, Purchase> transByCustomerStream = purchaseKStream.through(stringSerde, purchaseSerde, streamPartitioner, "customer_transactions");
 
-        transByCustomerStream.transformValues(() -> transformer).to(stringSerde, rewardAccumulatorSerde, "rewards");
+
+        KStream<String, RewardAccumulator> statefulRewardAccumulator = transByCustomerStream.transformValues(() -> transformer, rewardsStateStoreName);
+
+        statefulRewardAccumulator.print(stringSerde, rewardAccumulatorSerde, "rewards");
+        statefulRewardAccumulator.to(stringSerde, rewardAccumulatorSerde, "rewards");
 
 
+        System.out.println("Starting Adding State Example");
         KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder,streamsConfig);
+        System.out.println("ZMart Adding State Application Started");
         kafkaStreams.start();
+        Thread.sleep(65000);
+        System.out.println("Shutting down the Add State Application now");
+        kafkaStreams.close();
+        MockDataProducer.shutdown();
     }
 
 

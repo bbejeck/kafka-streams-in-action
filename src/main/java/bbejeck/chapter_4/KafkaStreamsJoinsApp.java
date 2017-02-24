@@ -18,6 +18,7 @@ package bbejeck.chapter_4;
 
 import bbejeck.chapter_4.joiner.PurchaseJoiner;
 import bbejeck.chapter_4.timestamp_extractor.TransactionTimestampExtractor;
+import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.CorrelatedPurchase;
 import bbejeck.model.Purchase;
 import bbejeck.util.serde.StreamsSerdes;
@@ -44,9 +45,12 @@ import java.util.Properties;
 public class KafkaStreamsJoinsApp {
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
-        StreamsConfig streamingConfig = new StreamsConfig(getProperties());
+        //Used only to produce data for this application, not typical usage
+        MockDataProducer.generatePurchaseData();
+
+        StreamsConfig streamsConfig = new StreamsConfig(getProperties());
         KStreamBuilder kStreamBuilder = new KStreamBuilder();
 
 
@@ -78,8 +82,12 @@ public class KafkaStreamsJoinsApp {
 
 
         System.out.println("Starting Join Examples");
-        KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder, streamingConfig);
+        KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder,streamsConfig);
         kafkaStreams.start();
+        Thread.sleep(65000);
+        System.out.println("Shutting down the Join Examples now");
+        kafkaStreams.close();
+        MockDataProducer.shutdown();
 
 
     }

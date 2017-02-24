@@ -4,6 +4,7 @@ import bbejeck.model.CorrelatedPurchase;
 import bbejeck.model.Purchase;
 import org.apache.kafka.streams.kstream.ValueJoiner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -20,7 +21,8 @@ public class PurchaseJoiner implements ValueJoiner<Purchase, Purchase, Correlate
         Double otherPrice = otherPurchase != null ? otherPurchase.getPrice() : 0.0;
         String otherItemPurchased = otherPurchase != null ? otherPurchase.getItemPurchased() : null;
 
-        List<String> purchasedItems = Arrays.asList(purchase.getItemPurchased());
+        List<String> purchasedItems = new ArrayList<>();
+        purchasedItems.add(purchase.getItemPurchased());
 
         if (otherItemPurchased != null) {
             purchasedItems.add(otherItemPurchased);

@@ -37,6 +37,7 @@ public class Purchase {
       private double price;
       private Date purchaseDate;
       private String zipCode;
+      private String storeId;
 
     private Purchase(Builder builder) {
         firstName = builder.firstName;
@@ -50,6 +51,7 @@ public class Purchase {
         zipCode = builder.zipCode;
         employeeId = builder.employeeId;
         department = builder.department;
+        storeId = builder.storeId;
     }
 
     public static Builder builder() {
@@ -68,6 +70,9 @@ public class Purchase {
         builder.zipCode = copy.zipCode;
         builder.customerId = copy.customerId;
         builder.department = copy.department;
+        builder.employeeId = copy.employeeId;
+        builder.storeId = copy.storeId;
+
         return builder;
     }
 
@@ -116,6 +121,10 @@ public class Purchase {
         return customerId;
     }
 
+    public String getStoreId() {
+        return storeId;
+    }
+
     @Override
     public String toString() {
         return "Purchase{" +
@@ -130,6 +139,7 @@ public class Purchase {
                 ", price=" + price +
                 ", purchaseDate=" + purchaseDate +
                 ", zipCode='" + zipCode + '\'' +
+                ", storeId='" + storeId + '\'' +
                 '}';
     }
 
@@ -145,6 +155,7 @@ public class Purchase {
         private String zipCode;
         private String department;
         private String employeeId;
+        private String storeId;
 
         private static final String CC_NUMBER_REPLACEMENT="xxxx-xxxx-xxxx-";
 
@@ -186,6 +197,11 @@ public class Purchase {
 
         public Builder employeeId(String employeeId) {
             this.employeeId = employeeId;
+            return this;
+        }
+
+        public Builder storeId(String storeId) {
+            this.storeId = storeId;
             return this;
         }
 

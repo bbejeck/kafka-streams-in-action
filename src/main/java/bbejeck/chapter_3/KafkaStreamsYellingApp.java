@@ -16,6 +16,7 @@
 
 package bbejeck.chapter_3;
 
+import bbejeck.clients.producer.MockDataProducer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -27,14 +28,17 @@ import java.util.Properties;
 
 public class KafkaStreamsYellingApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
+
+        //Used only to produce data for this application, not typical usage
+        MockDataProducer.generateRandomTextData();
 
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "yelling_app_id");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
 
-        StreamsConfig streamingConfig = new StreamsConfig(props);
+        StreamsConfig streamsConfig = new StreamsConfig(props);
 
         Serde<String> stringSerde = Serdes.String();
 
@@ -42,17 +46,20 @@ public class KafkaStreamsYellingApp {
 
         KStream<String, String> simpleFirstStream = kStreamBuilder.stream(stringSerde, stringSerde, "src-topic");
 
-        kStreamBuilder.stream(stringSerde, stringSerde, "src-topic").mapValues(String::toUpperCase).to("out-topic");
 
-        simpleFirstStream.mapValues(String::toUpperCase);
+        KStream<String, String> upperCasedStream = simpleFirstStream.mapValues(String::toUpperCase);
 
-        simpleFirstStream.to(stringSerde, stringSerde, "out-topic");
-        simpleFirstStream.print("Yelling App");
+        upperCasedStream.to(stringSerde, stringSerde, "out-topic");
+        upperCasedStream.print("Yelling App");
 
-        KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder, streamingConfig);
 
+        KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder,streamsConfig);
+        System.out.println("Hello World Yelling App Started");
         kafkaStreams.start();
-
+        Thread.sleep(35000);
+        System.out.println("Shutting down the Yelling APP now");
+        kafkaStreams.close();
+        MockDataProducer.shutdown();
 
     }
 }
