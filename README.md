@@ -44,12 +44,12 @@ and run the .bat files with the same name and in the same order.
 If you are on windows, go to the <install dir>/kafka_2.11-0.10.3.0-SNAPSHOT/bin/windows directory
 and run the .bat files with the same name and in the same order.
 
-#### Sample Code
+#### Sample Kafka Streams Code
 All the code from the book can be found in the directory corresponding to the chapter where
 the book introduced or demonstrated the concept/code.  Code that is not in a directory named "chapter_N" is either
 common code used across all chapters, or utility code.
  
-#### Running the examples
+#### Running the Kafka Streams examples
  
 All of the example programs can be run from within an IDE or from the command line.  There are gradle
 tasks for each of the examples we have so far.  The provided Kafka will need to be running before
@@ -68,7 +68,7 @@ we have so far:
 4. ./gradlew runAddStateAppChapter_4
 5. ./gradlew runJoinsExampleAppChapter_4
 
-#### Example Program Output
+#### Example Kafka Streams Program Output
 When running the examples, the program will generate data to flow through Kafka and into the sample
 streams program.  The data generation occurs in the background.  The Kafka Streams programs will run for 
 approximately one minute each.  The sample programs write results to the console as well as topics.  While you
