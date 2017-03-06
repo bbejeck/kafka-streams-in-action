@@ -50,7 +50,7 @@ public class StreamsSerdes {
         private JsonSerializer<T> serializer;
         private JsonDeserializer<T> deserializer;
 
-        public WrapperSerde(JsonSerializer<T> serializer, JsonDeserializer<T> deserializer) {
+         WrapperSerde(JsonSerializer<T> serializer, JsonDeserializer<T> deserializer) {
             this.serializer = serializer;
             this.deserializer = deserializer;
         }

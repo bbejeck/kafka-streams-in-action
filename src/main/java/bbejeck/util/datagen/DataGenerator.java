@@ -1,15 +1,10 @@
 package bbejeck.util.datagen;
 
 import bbejeck.model.Purchase;
-import com.github.javafaker.Beer;
 import com.github.javafaker.ChuckNorris;
 import com.github.javafaker.Faker;
 import com.github.javafaker.Finance;
 import com.github.javafaker.Name;
-import com.github.javafaker.Shakespeare;
-import com.github.javafaker.Superhero;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -23,9 +18,11 @@ import java.util.regex.Pattern;
 
 public class DataGenerator {
 
-    private static final int NUMBER_UNIQUE_CUSTOMERS = 100;
-    private static final int NUMBER_UNIQUE_STORES = 15;
-    private static final int NUMBER_TEXT_STATEMENTS = 15;
+    public static final int NUMBER_UNIQUE_CUSTOMERS = 100;
+    public static final int NUMBER_UNIQUE_STORES = 15;
+    public static final int NUMBER_TEXT_STATEMENTS = 15;
+    public static final int DEFAULT_NUM_PURCHASES = 100;
+    public static final int NUM_ITERATIONS = 10;
 
     private DataGenerator(){}
 
@@ -42,21 +39,21 @@ public class DataGenerator {
        return phrases;
     }
 
-    public static List<Purchase> generatePurchases(int number) {
+    public static List<Purchase> generatePurchases(int number, int numberCustomers) {
         List<Purchase> purchases = new ArrayList<>();
 
         Faker faker = new Faker();
-        List<Customer> customers = generateCustomers();
+        List<Customer> customers = generateCustomers(numberCustomers);
         List<Store> stores = generateStores();
 
         Random random = new Random();
         for (int i = 0; i < number; i++) {
             String itemPurchased = faker.commerce().productName();
             int quantity = faker.number().numberBetween(1, 5);
-            double price = Double.parseDouble(faker.commerce().price(4.00, 15.00));
+            double price = Double.parseDouble(faker.commerce().price(4.00, 295.00));
             Date purchaseDate = faker.date().past(12, TimeUnit.HOURS, new Date());
 
-            Customer customer = customers.get(random.nextInt(NUMBER_UNIQUE_CUSTOMERS));
+            Customer customer = customers.get(random.nextInt(numberCustomers));
             Store store = stores.get(random.nextInt(NUMBER_UNIQUE_STORES));
 
             Purchase purchase = Purchase.builder().creditCardNumber(customer.creditCardNumber).customerId(customer.customerId)
@@ -87,11 +84,11 @@ public class DataGenerator {
 
     }
 
-    private static List<Customer> generateCustomers() {
-        List<Customer> customers = new ArrayList<>(NUMBER_UNIQUE_CUSTOMERS);
+    private static List<Customer> generateCustomers(int numberCustomers) {
+        List<Customer> customers = new ArrayList<>(numberCustomers);
         Faker faker = new Faker();
-        List<String> creditCards = generateCreditCardNumbers(NUMBER_UNIQUE_CUSTOMERS);
-        for (int i = 0; i < NUMBER_UNIQUE_CUSTOMERS; i++) {
+        List<String> creditCards = generateCreditCardNumbers(numberCustomers);
+        for (int i = 0; i < numberCustomers; i++) {
             Name name = faker.name();
             String creditCard = creditCards.get(i);
             String customerId = faker.idNumber().valid();

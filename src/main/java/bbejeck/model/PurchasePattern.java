@@ -28,11 +28,15 @@ public class PurchasePattern {
     private String zipCode;
     private String item;
     private Date date;
+    private double amount;
+
 
     private PurchasePattern(Builder builder) {
         zipCode = builder.zipCode;
         item = builder.item;
         date = builder.date;
+        amount = builder.amount;
+
     }
 
     public static Builder newBuilder() {
@@ -55,6 +59,9 @@ public class PurchasePattern {
         return date;
     }
 
+    public double getAmount() {
+        return amount;
+    }
 
     @Override
     public String toString() {
@@ -62,6 +69,7 @@ public class PurchasePattern {
                 "zipCode='" + zipCode + '\'' +
                 ", item='" + item + '\'' +
                 ", date=" + date +
+                ", amount=" + amount +
                 '}';
     }
 
@@ -69,6 +77,7 @@ public class PurchasePattern {
         private String zipCode;
         private String item;
         private Date date;
+        private double amount;
 
         private  Builder() {
         }
@@ -77,6 +86,7 @@ public class PurchasePattern {
             this.zipCode = purchase.getZipCode();
             this.item = purchase.getItemPurchased();
             this.date = purchase.getPurchaseDate();
+            this.amount = purchase.getPrice() * purchase.getQuantity();
         }
 
         public Builder zipCode(String val) {
@@ -91,6 +101,11 @@ public class PurchasePattern {
 
         public Builder date(Date val) {
             date = val;
+            return this;
+        }
+
+        public Builder amount(double amount) {
+            this.amount = amount;
             return this;
         }
 

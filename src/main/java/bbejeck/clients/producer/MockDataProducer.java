@@ -15,6 +15,9 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static bbejeck.util.datagen.DataGenerator.DEFAULT_NUM_PURCHASES;
+import static bbejeck.util.datagen.DataGenerator.NUM_ITERATIONS;
+
 /**
  * Class will produce 100 Purchase records per iteration
  * for a total of 1,000 records in one minute then it will shutdown.
@@ -27,16 +30,21 @@ public class MockDataProducer {
     private static Callback callback;
     private static final String TRANSACTIONS_TOPIC = "transactions";
     private static final String YELLING_APP_TOPIC = "src-topic";
-    private static final int NUM_ITERATIONS = 10;
     private static final int YELLING_APP_ITERATIONS = 5;
 
 
+
+
     public static void generatePurchaseData() {
+        generatePurchaseData(DataGenerator.DEFAULT_NUM_PURCHASES, DataGenerator.NUM_ITERATIONS, DataGenerator.NUMBER_UNIQUE_CUSTOMERS);
+    }
+
+    public static void generatePurchaseData(int numberPurchases, int numberIterations, int numberCustomers){
         Runnable generateTask = () -> {
             init();
             int counter = 0;
-            while (counter++ < NUM_ITERATIONS) {
-                List<Purchase> purchases = DataGenerator.generatePurchases(100);
+            while (counter++ < numberIterations) {
+                List<Purchase> purchases = DataGenerator.generatePurchases(numberPurchases, numberCustomers);
                 List<String> jsonValues = convertToJson(purchases);
                 for (String value : jsonValues) {
                     ProducerRecord<String, String> record = new ProducerRecord<>(TRANSACTIONS_TOPIC, null, value);
