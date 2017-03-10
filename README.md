@@ -17,7 +17,7 @@ the first time you run the ./gradlew or gradlew command gradle will be installed
 3. kafka-clients-0.10.3.0-SNAPSHOT.jar
 
 These dependencies are included because I wanted to present some of the latest features and this book
-is targeting the 0.10.3.0 release of Kafka for publication.  All other dependencies are taken care of via gradle.
+is targeting the 0.11.0 release of Kafka for publication.  All other dependencies are taken care of via gradle.
  
 #### IDE setup
 The gradle eclipse and intellij plugins are included in the build.gradle file.

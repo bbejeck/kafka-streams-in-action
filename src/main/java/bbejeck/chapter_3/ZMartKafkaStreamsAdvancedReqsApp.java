@@ -42,7 +42,7 @@ public class ZMartKafkaStreamsAdvancedReqsApp {
     public static void main(String[] args) throws Exception {
 
         //Used only to produce data for this application, not typical usage
-        MockDataProducer.generatePurchaseData();
+        MockDataProducer.producePurchaseData();
 
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
 

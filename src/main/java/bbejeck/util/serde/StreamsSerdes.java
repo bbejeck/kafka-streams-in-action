@@ -3,6 +3,7 @@ package bbejeck.util.serde;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
 import bbejeck.model.RewardAccumulator;
+import bbejeck.model.StockTickerData;
 import bbejeck.util.serializer.JsonDeserializer;
 import bbejeck.util.serializer.JsonSerializer;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -26,22 +27,32 @@ public class StreamsSerdes {
         return new PurchaseSerde();
     }
 
+    public static Serde<StockTickerData> StockTickerSerde() {
+        return  new StockTickerSerde();
+    }
 
-    private static final class PurchasePatternsSerde extends WrapperSerde<PurchasePattern> {
-        private PurchasePatternsSerde() {
+
+    public static final class PurchasePatternsSerde extends WrapperSerde<PurchasePattern> {
+        public PurchasePatternsSerde() {
             super(new JsonSerializer<>(), new JsonDeserializer<>(PurchasePattern.class));
         }
     }
 
-    private static final class RewardAccumulatorSerde extends WrapperSerde<RewardAccumulator> {
-        private RewardAccumulatorSerde() {
+    public static final class RewardAccumulatorSerde extends WrapperSerde<RewardAccumulator> {
+        public RewardAccumulatorSerde() {
             super(new JsonSerializer<>(), new JsonDeserializer<>(RewardAccumulator.class));
         }
     }
 
-    private static final class PurchaseSerde extends WrapperSerde<Purchase> {
-        private PurchaseSerde() {
+    public static final class PurchaseSerde extends WrapperSerde<Purchase> {
+        public PurchaseSerde() {
             super(new JsonSerializer<>(), new JsonDeserializer<>(Purchase.class));
+        }
+    }
+
+    public static final class StockTickerSerde extends WrapperSerde<StockTickerData> {
+        public StockTickerSerde() {
+            super(new JsonSerializer<>(), new JsonDeserializer<>(StockTickerData.class));
         }
     }
 

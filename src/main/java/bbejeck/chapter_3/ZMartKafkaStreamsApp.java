@@ -39,7 +39,7 @@ public class ZMartKafkaStreamsApp {
 
 
         //Used only to produce data for this application, not typical usage
-        MockDataProducer.generatePurchaseData();
+        MockDataProducer.producePurchaseData();
 
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
 

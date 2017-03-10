@@ -1,17 +1,21 @@
 package bbejeck.util.datagen;
 
+import bbejeck.model.PublicTradedCompany;
 import bbejeck.model.Purchase;
 import com.github.javafaker.ChuckNorris;
 import com.github.javafaker.Faker;
 import com.github.javafaker.Finance;
 import com.github.javafaker.Name;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -22,21 +26,22 @@ public class DataGenerator {
     public static final int NUMBER_UNIQUE_STORES = 15;
     public static final int NUMBER_TEXT_STATEMENTS = 15;
     public static final int DEFAULT_NUM_PURCHASES = 100;
+    public static final int NUMBER_TRADED_COMPANIES = 50;
     public static final int NUM_ITERATIONS = 10;
 
-    private DataGenerator(){}
-
+    private DataGenerator() {
+    }
 
 
     public static List<String> generateRandomText() {
-        List<String> phrases  = new ArrayList<>(NUMBER_TEXT_STATEMENTS);
+        List<String> phrases = new ArrayList<>(NUMBER_TEXT_STATEMENTS);
         Faker faker = new Faker();
 
         for (int i = 0; i < NUMBER_TEXT_STATEMENTS; i++) {
             ChuckNorris chuckNorris = faker.chuckNorris();
             phrases.add(chuckNorris.fact());
         }
-       return phrases;
+        return phrases;
     }
 
     public static List<Purchase> generatePurchases(int number, int numberCustomers) {
@@ -66,12 +71,42 @@ public class DataGenerator {
                 Purchase cafePurchase = generateCafePurchase(purchase, faker);
                 purchases.add(cafePurchase);
             }
-          purchases.add(purchase);
+            purchases.add(purchase);
         }
 
         return purchases;
 
     }
+
+
+
+    public static List<PublicTradedCompany> stockTicker(int numberCompanies){
+        return generatePublicTradedCompanies(numberCompanies);
+    }
+
+
+    private static List<PublicTradedCompany> generatePublicTradedCompanies(int numberCompanies) {
+        List<PublicTradedCompany> companies = new ArrayList<>();
+        Faker faker = new Faker();
+        Random random = new Random();
+        for (int i = 0; i < numberCompanies; i++) {
+            String name = faker.company().name();
+            String stripped = name.replaceAll("[^A-Za-z]", "");
+            int start = random.nextInt(stripped.length() - 4);
+            String symbol = stripped.substring(start, start + 4);
+            double volatility = Double.parseDouble(faker.options().option("0.01", "0.02", "0.03", "0.04", "0.05", "0.06", "0.07", "0.08", "0.09"));
+            double lastSold = faker.number().randomDouble(2, 15, 150);
+            String sector = faker.options().option("Energy","Finance","Technology","Transportation");
+            String industry = faker.options().option("Oil & Gas Production","Coal Mining","Commercial Banks","Finance/Investors Services","Computer Communications Equipment","Software Consulting","Aerospace","Railroads" );
+            companies.add(new PublicTradedCompany(volatility, lastSold, symbol, name, sector, industry));
+        }
+
+        return companies;
+        
+    }
+
+
+
 
     private static Purchase generateCafePurchase(Purchase purchase, Faker faker) {
         Date date = purchase.getPurchaseDate();

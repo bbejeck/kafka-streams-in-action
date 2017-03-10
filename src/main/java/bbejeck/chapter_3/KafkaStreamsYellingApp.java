@@ -32,7 +32,7 @@ public class KafkaStreamsYellingApp {
 
 
         //Used only to produce data for this application, not typical usage
-        MockDataProducer.generateRandomTextData();
+        MockDataProducer.produceRandomTextData();
 
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "yelling_app_id");

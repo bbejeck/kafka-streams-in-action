@@ -1,6 +1,8 @@
 package bbejeck.clients.producer;
 
+import bbejeck.model.PublicTradedCompany;
 import bbejeck.model.Purchase;
+import bbejeck.model.StockTickerData;
 import bbejeck.util.datagen.DataGenerator;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,7 +17,6 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static bbejeck.util.datagen.DataGenerator.DEFAULT_NUM_PURCHASES;
 import static bbejeck.util.datagen.DataGenerator.NUM_ITERATIONS;
 
 /**
@@ -29,17 +30,20 @@ public class MockDataProducer {
     private static ExecutorService executorService = Executors.newFixedThreadPool(1);
     private static Callback callback;
     private static final String TRANSACTIONS_TOPIC = "transactions";
+    private static final String STOCK_TOPIC = "stock-ticker";
+    public static final String STOCK_TICKER_TABLE_TOPIC = "stock-ticker-table";
+    public static final String STOCK_TICKER_STREAM_TOPIC = "stock-ticker-stream";
     private static final String YELLING_APP_TOPIC = "src-topic";
     private static final int YELLING_APP_ITERATIONS = 5;
 
 
 
 
-    public static void generatePurchaseData() {
-        generatePurchaseData(DataGenerator.DEFAULT_NUM_PURCHASES, DataGenerator.NUM_ITERATIONS, DataGenerator.NUMBER_UNIQUE_CUSTOMERS);
+    public static void producePurchaseData() {
+        producePurchaseData(DataGenerator.DEFAULT_NUM_PURCHASES, DataGenerator.NUM_ITERATIONS, DataGenerator.NUMBER_UNIQUE_CUSTOMERS);
     }
 
-    public static void generatePurchaseData(int numberPurchases, int numberIterations, int numberCustomers){
+    public static void producePurchaseData(int numberPurchases, int numberIterations, int numberCustomers){
         Runnable generateTask = () -> {
             init();
             int counter = 0;
@@ -63,7 +67,51 @@ public class MockDataProducer {
         executorService.submit(generateTask);
     }
 
-    public static void generateRandomTextData() {
+    public static void produceStockTickerData() {
+          produceStockTickerData(DataGenerator.NUMBER_TRADED_COMPANIES, NUM_ITERATIONS);
+    }
+
+    public static void produceStockTickerData(int numberCompanies, int numberIterations) {
+        Runnable generateTask = () -> {
+            init();
+            int counter = 0;
+            List<PublicTradedCompany> publicTradedCompanyList = DataGenerator.stockTicker(numberCompanies);
+
+            while (counter++ < numberIterations) {
+                for (PublicTradedCompany company : publicTradedCompanyList) {
+                    String value = convertToJson(new StockTickerData(company.getPrice(),company.getSymbol()));
+
+                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TICKER_TABLE_TOPIC, company.getSymbol(), value);
+                    producer.send(record, callback);
+
+                    record = new ProducerRecord<>(STOCK_TICKER_STREAM_TOPIC, company.getSymbol(), value);
+                    producer.send(record, callback);
+                    
+                    company.updateStockPrice();
+                }
+                System.out.println("Stock updates sent");
+                try {
+                    Thread.sleep(4000);
+                } catch (InterruptedException e) {
+                    Thread.interrupted();
+                }
+            }
+            //System.out.println("Done generating StockTickerData Data");
+
+        };
+        executorService.submit(generateTask);
+    }
+    
+
+    private static List<StockTickerData> getTickerData(List<PublicTradedCompany> companies){
+        List<StockTickerData> tickerData = new ArrayList<>();
+        for (PublicTradedCompany company : companies) {
+              tickerData.add(new StockTickerData(company.getPrice(), company.getSymbol()));
+        }
+        return tickerData;
+    }
+
+    public static void produceRandomTextData() {
         Runnable generateTask = () -> {
             init();
             int counter = 0;
@@ -124,8 +172,12 @@ public class MockDataProducer {
     private static <T> List<String> convertToJson(List<T> generatedDataItems) {
         List<String> jsonList = new ArrayList<>();
         for (T generatedData : generatedDataItems) {
-            jsonList.add(gson.toJson(generatedData));
+            jsonList.add(convertToJson(generatedData));
         }
         return jsonList;
+    }
+    
+    private static <T> String convertToJson(T generatedDataItem){
+        return gson.toJson(generatedDataItem);
     }
 }
