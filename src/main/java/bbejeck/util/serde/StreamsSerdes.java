@@ -1,9 +1,12 @@
 package bbejeck.util.serde;
 
+import bbejeck.collectors.FixedSizePriorityQueue;
+import bbejeck.model.CompanyStockVolume;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
 import bbejeck.model.RewardAccumulator;
 import bbejeck.model.StockTickerData;
+import bbejeck.model.StockTransaction;
 import bbejeck.util.serializer.JsonDeserializer;
 import bbejeck.util.serializer.JsonSerializer;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -31,6 +34,18 @@ public class StreamsSerdes {
         return  new StockTickerSerde();
     }
 
+    public static Serde<StockTransaction> StockTransactionSerde() {
+        return new StockTransactionSerde();
+    }
+
+    public static Serde<FixedSizePriorityQueue> FixedSizePriorityQueueSerde() {
+        return new FixedSizePriorityQueueSerde();
+    }
+
+    public static Serde<CompanyStockVolume>  CompanyStockVolumSerde() {
+        return new CompanyStockVolumeSerde();
+    }
+
 
     public static final class PurchasePatternsSerde extends WrapperSerde<PurchasePattern> {
         public PurchasePatternsSerde() {
@@ -53,6 +68,24 @@ public class StreamsSerdes {
     public static final class StockTickerSerde extends WrapperSerde<StockTickerData> {
         public StockTickerSerde() {
             super(new JsonSerializer<>(), new JsonDeserializer<>(StockTickerData.class));
+        }
+    }
+
+    public static final class StockTransactionSerde extends WrapperSerde<StockTransaction> {
+        public StockTransactionSerde(){
+            super(new JsonSerializer<>(), new JsonDeserializer<>(StockTransaction.class));
+        }
+    }
+
+    public static final class FixedSizePriorityQueueSerde extends WrapperSerde<FixedSizePriorityQueue> {
+        public FixedSizePriorityQueueSerde() {
+            super(new JsonSerializer<>(), new JsonDeserializer<>(FixedSizePriorityQueue.class));
+        }
+    }
+
+    public static final class CompanyStockVolumeSerde extends WrapperSerde<CompanyStockVolume> {
+        public CompanyStockVolumeSerde() {
+            super(new JsonSerializer<>(), new JsonDeserializer<>(CompanyStockVolume.class));
         }
     }
 

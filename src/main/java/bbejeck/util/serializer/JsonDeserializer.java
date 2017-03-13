@@ -16,7 +16,9 @@
 
 package bbejeck.util.serializer;
 
+import bbejeck.collectors.FixedSizePriorityQueue;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.util.Map;
@@ -29,11 +31,14 @@ import java.util.Map;
 
 public class JsonDeserializer<T> implements Deserializer<T> {
 
-    private Gson gson = new Gson();
+    private Gson gson;
     private Class<T> deserializedClass;
 
     public JsonDeserializer(Class<T> deserializedClass) {
         this.deserializedClass = deserializedClass;
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(FixedSizePriorityQueue.class, new FixedSizePriorityQueueAdapter().nullSafe());
+        gson = builder.create();
     }
 
     public JsonDeserializer() {

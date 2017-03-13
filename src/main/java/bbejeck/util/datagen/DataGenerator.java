@@ -2,20 +2,18 @@ package bbejeck.util.datagen;
 
 import bbejeck.model.PublicTradedCompany;
 import bbejeck.model.Purchase;
+import bbejeck.model.StockTransaction;
 import com.github.javafaker.ChuckNorris;
 import com.github.javafaker.Faker;
 import com.github.javafaker.Finance;
 import com.github.javafaker.Name;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -78,14 +76,29 @@ public class DataGenerator {
 
     }
 
+    public static List<StockTransaction> generateStockTransactions(List<Customer> customers, List<PublicTradedCompany> companies, int number) {
+        List<StockTransaction> transactions = new ArrayList<>(number);
+        Faker faker = new Faker();
+        for (int i = 0; i < number; i++) {
+            int numberShares = faker.number().numberBetween(100, 25000);
+            Customer customer = customers.get(faker.number().numberBetween(0, customers.size()));
+            PublicTradedCompany company = companies.get(faker.number().numberBetween(0, companies.size()));
+            Date transactionDate = faker.date().past(15, TimeUnit.MINUTES, new Date());
+            StockTransaction transaction = StockTransaction.newBuilder().withCustomerId(customer.customerId).withTransactionTimestamp(transactionDate)
+                    .withIndustry(company.getIndustry()).withSector(company.getSector()).withSharePrice(company.updateStockPrice()).withShares(numberShares)
+                    .withSymbol(company.getSymbol()).withPurchase(true).build();
+            transactions.add(transaction);
+        }
+        return transactions;
+    }
 
 
-    public static List<PublicTradedCompany> stockTicker(int numberCompanies){
+    public static List<PublicTradedCompany> stockTicker(int numberCompanies) {
         return generatePublicTradedCompanies(numberCompanies);
     }
 
 
-    private static List<PublicTradedCompany> generatePublicTradedCompanies(int numberCompanies) {
+    public static List<PublicTradedCompany> generatePublicTradedCompanies(int numberCompanies) {
         List<PublicTradedCompany> companies = new ArrayList<>();
         Faker faker = new Faker();
         Random random = new Random();
@@ -96,16 +109,14 @@ public class DataGenerator {
             String symbol = stripped.substring(start, start + 4);
             double volatility = Double.parseDouble(faker.options().option("0.01", "0.02", "0.03", "0.04", "0.05", "0.06", "0.07", "0.08", "0.09"));
             double lastSold = faker.number().randomDouble(2, 15, 150);
-            String sector = faker.options().option("Energy","Finance","Technology","Transportation");
-            String industry = faker.options().option("Oil & Gas Production","Coal Mining","Commercial Banks","Finance/Investors Services","Computer Communications Equipment","Software Consulting","Aerospace","Railroads" );
+            String sector = faker.options().option("Energy", "Finance", "Technology", "Transportation", "Health Care");
+            String industry = faker.options().option("Oil & Gas Production", "Coal Mining", "Commercial Banks", "Finance/Investors Services", "Computer Communications Equipment", "Software Consulting", "Aerospace", "Railroads", "Major Pharmaceuticals");
             companies.add(new PublicTradedCompany(volatility, lastSold, symbol, name, sector, industry));
         }
 
         return companies;
-        
+
     }
-
-
 
 
     private static Purchase generateCafePurchase(Purchase purchase, Faker faker) {
@@ -119,7 +130,7 @@ public class DataGenerator {
 
     }
 
-    private static List<Customer> generateCustomers(int numberCustomers) {
+    public static List<Customer> generateCustomers(int numberCustomers) {
         List<Customer> customers = new ArrayList<>(numberCustomers);
         Faker faker = new Faker();
         List<String> creditCards = generateCreditCardNumbers(numberCustomers);
@@ -165,7 +176,7 @@ public class DataGenerator {
     }
 
 
-    private static class Customer {
+    public static class Customer {
         private String firstName;
         private String lastName;
         private String customerId;

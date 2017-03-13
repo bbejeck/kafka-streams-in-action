@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package bbejeck.model;
+package bbejeck.collectors;
 
-/**
- * User: Bill Bejeck
- * Date: 3/10/16
- * Time: 7:54 PM
- */
+
+import bbejeck.model.StockTransaction;
+
 public class StockTransactionCollector {
 
     private double amount;
@@ -33,8 +31,8 @@ public class StockTransactionCollector {
             tickerSymbol = transaction.getSymbol();
         }
 
-        this.amount += transaction.getAmount();
-        if(transaction.getType().equalsIgnoreCase("purchase")){
+        this.amount += transaction.getSharePrice();
+        if(transaction.getSector().equalsIgnoreCase("purchase")){
             this.sharesPurchased += transaction.getShares();
         } else{
             this.sharesSold += transaction.getShares();

@@ -3,6 +3,7 @@ package bbejeck.clients.producer;
 import bbejeck.model.PublicTradedCompany;
 import bbejeck.model.Purchase;
 import bbejeck.model.StockTickerData;
+import bbejeck.model.StockTransaction;
 import bbejeck.util.datagen.DataGenerator;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -17,6 +18,8 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static bbejeck.util.datagen.DataGenerator.NUMBER_TRADED_COMPANIES;
+import static bbejeck.util.datagen.DataGenerator.NUMBER_UNIQUE_CUSTOMERS;
 import static bbejeck.util.datagen.DataGenerator.NUM_ITERATIONS;
 
 /**
@@ -30,20 +33,18 @@ public class MockDataProducer {
     private static ExecutorService executorService = Executors.newFixedThreadPool(1);
     private static Callback callback;
     private static final String TRANSACTIONS_TOPIC = "transactions";
-    private static final String STOCK_TOPIC = "stock-ticker";
+    public static final String STOCK_TOPIC = "stock-transactions";
     public static final String STOCK_TICKER_TABLE_TOPIC = "stock-ticker-table";
     public static final String STOCK_TICKER_STREAM_TOPIC = "stock-ticker-stream";
     private static final String YELLING_APP_TOPIC = "src-topic";
     private static final int YELLING_APP_ITERATIONS = 5;
 
 
-
-
     public static void producePurchaseData() {
         producePurchaseData(DataGenerator.DEFAULT_NUM_PURCHASES, DataGenerator.NUM_ITERATIONS, DataGenerator.NUMBER_UNIQUE_CUSTOMERS);
     }
 
-    public static void producePurchaseData(int numberPurchases, int numberIterations, int numberCustomers){
+    public static void producePurchaseData(int numberPurchases, int numberIterations, int numberCustomers) {
         Runnable generateTask = () -> {
             init();
             int counter = 0;
@@ -67,8 +68,35 @@ public class MockDataProducer {
         executorService.submit(generateTask);
     }
 
+    public static void produceStockTransactions(int numberIterations) {
+        List<PublicTradedCompany> companies = DataGenerator.generatePublicTradedCompanies(NUMBER_TRADED_COMPANIES);
+        List<DataGenerator.Customer> customers = DataGenerator.generateCustomers(25);
+        Runnable produceStockTransactionsTask = () -> {
+            init();
+            int counter = 0;
+            while (counter++ < numberIterations) {
+                List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, 50);
+                List<String> jsonTransactions = convertToJson(transactions);
+                for (String jsonTransaction : jsonTransactions) {
+                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TOPIC, null, jsonTransaction);
+                    producer.send(record, callback);
+                }
+                System.out.println("Stock Transactions Batch Sent");
+
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    Thread.interrupted();
+                }
+            }
+            System.out.println("Done generating stock data");
+
+        };
+        executorService.submit(produceStockTransactionsTask);
+    }
+
     public static void produceStockTickerData() {
-          produceStockTickerData(DataGenerator.NUMBER_TRADED_COMPANIES, NUM_ITERATIONS);
+        produceStockTickerData(DataGenerator.NUMBER_TRADED_COMPANIES, NUM_ITERATIONS);
     }
 
     public static void produceStockTickerData(int numberCompanies, int numberIterations) {
@@ -79,14 +107,14 @@ public class MockDataProducer {
 
             while (counter++ < numberIterations) {
                 for (PublicTradedCompany company : publicTradedCompanyList) {
-                    String value = convertToJson(new StockTickerData(company.getPrice(),company.getSymbol()));
+                    String value = convertToJson(new StockTickerData(company.getPrice(), company.getSymbol()));
 
                     ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TICKER_TABLE_TOPIC, company.getSymbol(), value);
                     producer.send(record, callback);
 
                     record = new ProducerRecord<>(STOCK_TICKER_STREAM_TOPIC, company.getSymbol(), value);
                     producer.send(record, callback);
-                    
+
                     company.updateStockPrice();
                 }
                 System.out.println("Stock updates sent");
@@ -101,12 +129,12 @@ public class MockDataProducer {
         };
         executorService.submit(generateTask);
     }
-    
 
-    private static List<StockTickerData> getTickerData(List<PublicTradedCompany> companies){
+
+    private static List<StockTickerData> getTickerData(List<PublicTradedCompany> companies) {
         List<StockTickerData> tickerData = new ArrayList<>();
         for (PublicTradedCompany company : companies) {
-              tickerData.add(new StockTickerData(company.getPrice(), company.getSymbol()));
+            tickerData.add(new StockTickerData(company.getPrice(), company.getSymbol()));
         }
         return tickerData;
     }
@@ -176,8 +204,8 @@ public class MockDataProducer {
         }
         return jsonList;
     }
-    
-    private static <T> String convertToJson(T generatedDataItem){
+
+    private static <T> String convertToJson(T generatedDataItem) {
         return gson.toJson(generatedDataItem);
     }
 }

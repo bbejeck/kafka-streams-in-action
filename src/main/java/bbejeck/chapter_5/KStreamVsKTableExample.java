@@ -9,7 +9,6 @@ import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.StockTickerData;
 import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;

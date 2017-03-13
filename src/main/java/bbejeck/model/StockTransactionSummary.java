@@ -32,8 +32,8 @@ public class StockTransactionSummary {
 
 
     public void update(StockTransaction transaction){
-          this.amount += transaction.getAmount();
-          if(transaction.getType().equalsIgnoreCase("purchase")){
+          this.amount += transaction.getSharePrice();
+          if(transaction.getSector().equalsIgnoreCase("purchase")){
               this.sharesPurchased += transaction.getShares();
           } else{
               this.sharesSold += transaction.getShares();
