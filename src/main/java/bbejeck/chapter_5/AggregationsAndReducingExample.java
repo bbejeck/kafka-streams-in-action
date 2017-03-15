@@ -3,7 +3,7 @@ package bbejeck.chapter_5;
 
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.collectors.FixedSizePriorityQueue;
-import bbejeck.model.CompanyStockVolume;
+import bbejeck.model.ShareVolume;
 import bbejeck.model.StockTransaction;
 import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -34,20 +34,20 @@ public class AggregationsAndReducingExample {
 
         Serde<String> stringSerde = Serdes.String();
         Serde<StockTransaction> stockTransactionSerde = StreamsSerdes.StockTransactionSerde();
-        Serde<CompanyStockVolume> companyStockVolumeSerde = StreamsSerdes.CompanyStockVolumSerde();
+        Serde<ShareVolume> shareVolumeSerde = StreamsSerdes.ShareVolumeSerde();
         Serde<FixedSizePriorityQueue> fixedSizePriorityQueueSerde = StreamsSerdes.FixedSizePriorityQueueSerde();
 
         NumberFormat numberFormat = NumberFormat.getInstance();
         
-        Comparator<CompanyStockVolume> comparator = (st1, st2) -> st2.getShares() - st1.getShares();
-        FixedSizePriorityQueue<CompanyStockVolume> fixedQueue = new FixedSizePriorityQueue<>(comparator, 5);
+        Comparator<ShareVolume> comparator = (st1, st2) -> st2.getShares() - st1.getShares();
+        FixedSizePriorityQueue<ShareVolume> fixedQueue = new FixedSizePriorityQueue<>(comparator, 5);
 
         ValueMapper<FixedSizePriorityQueue, String> valueMapper = fpq -> {
             StringBuilder builder = new StringBuilder();
-            Iterator<CompanyStockVolume> iterator = fpq.iterator();
+            Iterator<ShareVolume> iterator = fpq.iterator();
             int counter = 1;
             while (iterator.hasNext()) {
-                CompanyStockVolume stockVolume = iterator.next();
+                ShareVolume stockVolume = iterator.next();
                 if (stockVolume != null) {
                     builder.append(counter++).append(")").append(stockVolume.getSymbol())
                             .append(":").append(numberFormat.format(stockVolume.getShares())).append(" ");
@@ -58,14 +58,16 @@ public class AggregationsAndReducingExample {
 
         KStreamBuilder kStreamBuilder = new KStreamBuilder();
 
-        KTable<String, CompanyStockVolume> stockTransactionsAggregateTable = kStreamBuilder.stream(EARLIEST, stringSerde, stockTransactionSerde, STOCK_TOPIC)
-                .mapValues(st -> CompanyStockVolume.newBuilder(st).build()).groupBy((k, v) -> v.getSymbol(), stringSerde, companyStockVolumeSerde)
-                .reduce(CompanyStockVolume::reduce, "stock-transaction-reductions");
+        KTable<String, ShareVolume> shareVolume = kStreamBuilder.stream(EARLIEST, stringSerde, stockTransactionSerde, STOCK_TOPIC)
+                .mapValues(st -> ShareVolume.newBuilder(st).build())
+                .groupBy((k, v) -> v.getSymbol(), stringSerde, shareVolumeSerde)
+                .reduce(ShareVolume::reduce, "stock-transaction-reductions");
 
 
-        stockTransactionsAggregateTable.groupBy((k, v) -> KeyValue.pair(v.getIndustry(), v), stringSerde, companyStockVolumeSerde)
+        shareVolume.groupBy((k, v) -> KeyValue.pair(v.getIndustry(), v), stringSerde, shareVolumeSerde)
                 .aggregate(() -> fixedQueue, (k, v, agg) -> agg.add(v), (k, v, agg) -> agg.remove(v), fixedSizePriorityQueueSerde, "volume-shares-industry-store")
                 .mapValues(valueMapper)
+                //.to("stock-volume-by-company")
                 .toStream().print("Stock volume by Industry");
 
 

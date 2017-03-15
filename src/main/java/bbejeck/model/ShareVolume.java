@@ -3,14 +3,14 @@ package bbejeck.model;
 
 import java.text.NumberFormat;
 
-public class CompanyStockVolume {
+public class ShareVolume {
 
     private String symbol;
     private int shares;
     private String industry;
 
 
-    private CompanyStockVolume(Builder builder) {
+    private ShareVolume(Builder builder) {
         symbol = builder.symbol;
         shares = builder.shares;
         industry = builder.industry;
@@ -33,13 +33,13 @@ public class CompanyStockVolume {
     @Override
     public String toString() {
         NumberFormat numberFormat = NumberFormat.getInstance();
-        return "CompanyStockVolume{" +
+        return "ShareVolume{" +
                 "symbol='" + symbol + '\'' +
                 ", shares=" + numberFormat.format(shares) +
                 '}';
     }
 
-    public static CompanyStockVolume reduce(CompanyStockVolume csv1, CompanyStockVolume csv2) {
+    public static ShareVolume reduce(ShareVolume csv1, ShareVolume csv2) {
         Builder builder = newBuilder(csv1);
         builder.shares = csv1.shares + csv2.shares;
         return builder.build();
@@ -57,7 +57,7 @@ public class CompanyStockVolume {
         return builder;
     }
 
-    public static Builder newBuilder(CompanyStockVolume copy) {
+    public static Builder newBuilder(ShareVolume copy) {
         Builder builder = new Builder();
         builder.symbol = copy.symbol;
         builder.shares = copy.shares;
@@ -89,8 +89,8 @@ public class CompanyStockVolume {
             return this;
         }
 
-        public CompanyStockVolume build() {
-            return new CompanyStockVolume(this);
+        public ShareVolume build() {
+            return new ShareVolume(this);
         }
     }
 }
