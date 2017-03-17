@@ -80,7 +80,7 @@ public class DataGenerator {
         List<StockTransaction> transactions = new ArrayList<>(number);
         Faker faker = new Faker();
         for (int i = 0; i < number; i++) {
-            int numberShares = faker.number().numberBetween(100, 25000);
+            int numberShares = faker.number().numberBetween(100, 50000);
             Customer customer = customers.get(faker.number().numberBetween(0, customers.size()));
             PublicTradedCompany company = companies.get(faker.number().numberBetween(0, companies.size()));
             Date transactionDate = faker.date().past(15, TimeUnit.MINUTES, new Date());

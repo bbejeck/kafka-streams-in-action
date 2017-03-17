@@ -84,7 +84,7 @@ public class MockDataProducer {
                 System.out.println("Stock Transactions Batch Sent");
 
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     Thread.interrupted();
                 }

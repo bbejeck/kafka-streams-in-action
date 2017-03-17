@@ -36,7 +36,6 @@ public class AggregationsAndReducingExample {
         Serde<StockTransaction> stockTransactionSerde = StreamsSerdes.StockTransactionSerde();
         Serde<ShareVolume> shareVolumeSerde = StreamsSerdes.ShareVolumeSerde();
         Serde<FixedSizePriorityQueue> fixedSizePriorityQueueSerde = StreamsSerdes.FixedSizePriorityQueueSerde();
-
         NumberFormat numberFormat = NumberFormat.getInstance();
         
         Comparator<ShareVolume> comparator = (st1, st2) -> st2.getShares() - st1.getShares();
@@ -65,14 +64,18 @@ public class AggregationsAndReducingExample {
 
 
         shareVolume.groupBy((k, v) -> KeyValue.pair(v.getIndustry(), v), stringSerde, shareVolumeSerde)
-                .aggregate(() -> fixedQueue, (k, v, agg) -> agg.add(v), (k, v, agg) -> agg.remove(v), fixedSizePriorityQueueSerde, "volume-shares-industry-store")
+                .aggregate(() -> fixedQueue,
+                        (k, v, agg) -> agg.add(v),
+                        (k, v, agg) -> agg.remove(v),
+                        fixedSizePriorityQueueSerde,
+                        "volume-shares-industry-store")
                 .mapValues(valueMapper)
                 //.to("stock-volume-by-company")
-                .toStream().print("Stock volume by Industry");
+                .print("Stock volume by Industry");
 
 
         KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder, streamsConfig);
-        MockDataProducer.produceStockTransactions(6);
+        MockDataProducer.produceStockTransactions(15);
         System.out.println("First Reduction and Aggregation Example Application Started");
         kafkaStreams.start();
         Thread.sleep(65000);
