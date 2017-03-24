@@ -1,6 +1,7 @@
 package bbejeck.util.serde;
 
 import bbejeck.collectors.FixedSizePriorityQueue;
+import bbejeck.model.TransactionSummary;
 import bbejeck.model.ShareVolume;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
@@ -40,6 +41,10 @@ public class StreamsSerdes {
 
     public static Serde<FixedSizePriorityQueue> FixedSizePriorityQueueSerde() {
         return new FixedSizePriorityQueueSerde();
+    }
+
+    public static Serde<TransactionSummary> TransactionSummarySerde() {
+        return new TransactionSummarySerde();
     }
 
     public static Serde<ShareVolume> ShareVolumeSerde() {
@@ -88,6 +93,14 @@ public class StreamsSerdes {
             super(new JsonSerializer<>(), new JsonDeserializer<>(ShareVolume.class));
         }
     }
+
+    public static final class TransactionSummarySerde extends WrapperSerde<TransactionSummary> {
+         public TransactionSummarySerde() {
+             super(new JsonSerializer<>(), new JsonDeserializer<>(TransactionSummary.class));
+         }
+    }
+
+
 
     private static class WrapperSerde<T> implements Serde<T> {
 

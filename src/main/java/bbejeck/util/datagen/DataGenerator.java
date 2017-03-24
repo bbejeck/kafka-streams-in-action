@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 
@@ -27,7 +28,16 @@ public class DataGenerator {
     public static final int NUMBER_TRADED_COMPANIES = 50;
     public static final int NUM_ITERATIONS = 10;
 
+    private static Faker dateFaker = new Faker();
+    private static Supplier<Date> timestampGenerator = () -> dateFaker.date().past(12, TimeUnit.HOURS, new Date());
+
     private DataGenerator() {
+    }
+
+
+
+    public static void setTimestampGenerator(Supplier<Date> timestampGenerator) {
+        DataGenerator.timestampGenerator = timestampGenerator;
     }
 
 
@@ -42,6 +52,15 @@ public class DataGenerator {
         return phrases;
     }
 
+    public static List<String> generateFinancialNews() {
+        List<String> news = new ArrayList<>(9);
+        Faker faker = new Faker();
+        for (int i = 0; i < 9; i++) {
+            news.add(faker.company().bs());
+        }
+        return news;
+    }
+
     public static List<Purchase> generatePurchases(int number, int numberCustomers) {
         List<Purchase> purchases = new ArrayList<>();
 
@@ -54,7 +73,7 @@ public class DataGenerator {
             String itemPurchased = faker.commerce().productName();
             int quantity = faker.number().numberBetween(1, 5);
             double price = Double.parseDouble(faker.commerce().price(4.00, 295.00));
-            Date purchaseDate = faker.date().past(12, TimeUnit.HOURS, new Date());
+            Date purchaseDate = timestampGenerator.get();
 
             Customer customer = customers.get(random.nextInt(numberCustomers));
             Store store = stores.get(random.nextInt(NUMBER_UNIQUE_STORES));
@@ -83,7 +102,7 @@ public class DataGenerator {
             int numberShares = faker.number().numberBetween(100, 50000);
             Customer customer = customers.get(faker.number().numberBetween(0, customers.size()));
             PublicTradedCompany company = companies.get(faker.number().numberBetween(0, companies.size()));
-            Date transactionDate = faker.date().past(15, TimeUnit.MINUTES, new Date());
+            Date transactionDate = timestampGenerator.get();
             StockTransaction transaction = StockTransaction.newBuilder().withCustomerId(customer.customerId).withTransactionTimestamp(transactionDate)
                     .withIndustry(company.getIndustry()).withSector(company.getSector()).withSharePrice(company.updateStockPrice()).withShares(numberShares)
                     .withSymbol(company.getSymbol()).withPurchase(true).build();

@@ -13,8 +13,10 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -36,6 +38,7 @@ public class MockDataProducer {
     public static final String STOCK_TOPIC = "stock-transactions";
     public static final String STOCK_TICKER_TABLE_TOPIC = "stock-ticker-table";
     public static final String STOCK_TICKER_STREAM_TOPIC = "stock-ticker-stream";
+    public static final String FINANCIAL_NEWS = "financial-news";
     private static final String YELLING_APP_TOPIC = "src-topic";
     private static final int YELLING_APP_ITERATIONS = 5;
 
@@ -69,11 +72,33 @@ public class MockDataProducer {
     }
 
     public static void produceStockTransactions(int numberIterations) {
-        List<PublicTradedCompany> companies = DataGenerator.generatePublicTradedCompanies(NUMBER_TRADED_COMPANIES);
-        List<DataGenerator.Customer> customers = DataGenerator.generateCustomers(25);
+        producePurchaseData(numberIterations, NUMBER_TRADED_COMPANIES, NUMBER_UNIQUE_CUSTOMERS);
+    }
+
+    public static void produceNewsAndStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers){
+        List<String> news = DataGenerator.generateFinancialNews();
+
+    }
+
+    public static void produceStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers) {
+        List<PublicTradedCompany> companies = DataGenerator.generatePublicTradedCompanies(numberTradedCompanies);
+        List<DataGenerator.Customer> customers = DataGenerator.generateCustomers(numberCustomers);
+        Set<String> industrySet = new HashSet<>();
+        for (PublicTradedCompany company : companies) {
+             industrySet.add(company.getIndustry());
+        }
+        List<String> news = DataGenerator.generateFinancialNews();
+
         Runnable produceStockTransactionsTask = () -> {
             init();
             int counter = 0;
+            for (String industry : industrySet) {
+                ProducerRecord<String, String> record = new ProducerRecord<>(FINANCIAL_NEWS, industry, news.get(counter++));
+                producer.send(record, callback);
+            }
+
+            System.out.println("Financial news sent");
+            counter = 0;
             while (counter++ < numberIterations) {
                 List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, 50);
                 List<String> jsonTransactions = convertToJson(transactions);
@@ -84,7 +109,7 @@ public class MockDataProducer {
                 System.out.println("Stock Transactions Batch Sent");
 
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(5000);
                 } catch (InterruptedException e) {
                     Thread.interrupted();
                 }
