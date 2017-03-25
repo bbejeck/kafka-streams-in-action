@@ -41,7 +41,7 @@ public class GlobalKTableExample {
 
         Serde<String> stringSerde = Serdes.String();
         Serde<StockTransaction> transactionSerde = StreamsSerdes.StockTransactionSerde();
-        Serde<TransactionSummary> transactionKeySerde = StreamsSerdes.TransactionSummarySerde();
+        Serde<TransactionSummary> transactionSummarySerde = StreamsSerdes.TransactionSummarySerde();
 
 
         KStreamBuilder kStreamBuilder = new KStreamBuilder();
@@ -56,7 +56,7 @@ public class GlobalKTableExample {
 
         KStream<String, TransactionSummary> countStream =
                 kStreamBuilder.stream(LATEST, stringSerde, transactionSerde, STOCK_TOPIC)
-                        .groupBy((noKey, transaction) -> TransactionSummary.from(transaction), transactionKeySerde, transactionSerde)
+                        .groupBy((noKey, transaction) -> TransactionSummary.from(transaction), transactionSummarySerde, transactionSerde)
                         .count(SessionWindows.with(twentySeconds), "session-windowed-customer-transaction-counts")
                         .toStream().map(transactionMapper);
 
@@ -64,10 +64,9 @@ public class GlobalKTableExample {
         GlobalKTable<String, String> clients = kStreamBuilder.globalTable("clients", "global-clients-store");
 
 
-        countStream.leftJoin(publicCompanies,
-                (key, txn) -> txn.getStockTicker(),
-                TransactionSummary::withCompmanyName)
-                .leftJoin(clients, (key, txn) -> txn.getCustomerId(), TransactionSummary::withCustomerName);
+        countStream.leftJoin(publicCompanies, (key, txn) -> txn.getStockTicker(),TransactionSummary::withCompmanyName)
+                .leftJoin(clients, (key, txn) -> txn.getCustomerId(), TransactionSummary::withCustomerName)
+                .print(stringSerde, transactionSummarySerde,"Resolved Transaction Summaries");
 
 
         
