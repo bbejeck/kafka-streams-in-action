@@ -28,41 +28,46 @@ public class StockPerformanceProcessor implements Processor<String, StockTransac
     public void init(ProcessorContext processorContext) {
         this.processorContext = processorContext;
         keyValueStore = (KeyValueStore) this.processorContext.getStateStore(stateStoreName);
-        this.processorContext.schedule(10000);
+        this.processorContext.schedule(15000);
     }
 
     @Override
     public void process(String symbol, StockTransaction transaction) {
-        StockPerformance stockPerformance = keyValueStore.get(symbol);
+        if (symbol != null) {
+            StockPerformance stockPerformance = keyValueStore.get(symbol);
 
-        if (stockPerformance == null) {
-            stockPerformance = new StockPerformance();
+            if (stockPerformance == null) {
+                stockPerformance = new StockPerformance();
+            }
+
+            stockPerformance.updatePriceStats(transaction.getSharePrice());
+            stockPerformance.updateVolumeStats(transaction.getShares());
+            stockPerformance.setLastUpdateSent(Instant.now());
+
+            keyValueStore.put(symbol, stockPerformance);
         }
-
-        stockPerformance.updatePriceStats(transaction.getSharePrice());
-        stockPerformance.updateVolumeStats(transaction.getShares());
-        stockPerformance.setLastUpdateSent(Instant.now());
-
-        keyValueStore.put(symbol, stockPerformance);
     }
 
     @Override
     public void punctuate(long timestamp) {
         KeyValueIterator<String, StockPerformance> performanceIterator = keyValueStore.all();
-        
+
         while (performanceIterator.hasNext()) {
             KeyValue<String, StockPerformance> keyValue = performanceIterator.next();
             String key = keyValue.key;
             StockPerformance stockPerformance = keyValue.value;
-            if (stockPerformance.priceDifferential() >= differentialThreshold ||
-                    stockPerformance.volumeDifferential() >= differentialThreshold) {
-                this.processorContext.forward(key, stockPerformance);
+
+            if (stockPerformance != null) {
+                if (stockPerformance.priceDifferential() >= differentialThreshold ||
+                        stockPerformance.volumeDifferential() >= differentialThreshold) {
+                    this.processorContext.forward(key, stockPerformance);
+                }
             }
         }
     }
 
     @Override
     public void close() {
-        keyValueStore.close();
+
     }
 }

@@ -1,5 +1,6 @@
 package bbejeck.clients.producer;
 
+import bbejeck.model.DayTradingAppClickEvent;
 import bbejeck.model.PublicTradedCompany;
 import bbejeck.model.Purchase;
 import bbejeck.model.StockTickerData;
@@ -19,6 +20,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 import static bbejeck.util.datagen.DataGenerator.NUMBER_TRADED_COMPANIES;
 import static bbejeck.util.datagen.DataGenerator.NUMBER_UNIQUE_CUSTOMERS;
@@ -39,6 +41,8 @@ public class MockDataProducer {
     public static final String STOCK_TICKER_TABLE_TOPIC = "stock-ticker-table";
     public static final String STOCK_TICKER_STREAM_TOPIC = "stock-ticker-stream";
     public static final String FINANCIAL_NEWS = "financial-news";
+    public static final String CLICK_EVNTS_SRC = "events";
+    public static final String CO_GROUPED_RESULTS = "cogrouped-results";
     private static final String YELLING_APP_TOPIC = "src-topic";
     private static final int YELLING_APP_ITERATIONS = 5;
 
@@ -80,7 +84,7 @@ public class MockDataProducer {
 
     }
 
-    public static void produceStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers) {
+    public static void produceStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers, Function<StockTransaction, String> keyFunction) {
         List<PublicTradedCompany> companies = DataGenerator.generatePublicTradedCompanies(numberTradedCompanies);
         List<DataGenerator.Customer> customers = DataGenerator.generateCustomers(numberCustomers);
         Set<String> industrySet = new HashSet<>();
@@ -101,9 +105,9 @@ public class MockDataProducer {
             counter = 0;
             while (counter++ < numberIterations) {
                 List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, 50);
-                List<String> jsonTransactions = convertToJson(transactions);
-                for (String jsonTransaction : jsonTransactions) {
-                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TOPIC, null, jsonTransaction);
+                for (StockTransaction transaction : transactions) {
+                    String jsonTransaction = convertToJson(transaction);
+                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TOPIC, keyFunction.apply(transaction), jsonTransaction);
                     producer.send(record, callback);
                 }
                 System.out.println("Stock Transactions Batch Sent");
@@ -118,6 +122,47 @@ public class MockDataProducer {
 
         };
         executorService.submit(produceStockTransactionsTask);
+    }
+
+    public static void produceStockTransactionsAndDayTradingClickEvents(int numberIterations, int numberTradedCompanies, int numClickEvents, Function<StockTransaction, String> keyFunction) {
+        List<PublicTradedCompany> companies = DataGenerator.generatePublicTradedCompanies(numberTradedCompanies);
+        List<DayTradingAppClickEvent> clickEvents = DataGenerator.generateDayTradingClickEvents(numClickEvents, companies);
+        List<DataGenerator.Customer> customers = DataGenerator.generateCustomers(NUMBER_UNIQUE_CUSTOMERS);
+
+        Runnable produceStockTransactionsTask = () -> {
+            init();
+
+
+            int counter = 0;
+            while (counter++ < numberIterations) {
+
+                for (DayTradingAppClickEvent clickEvent : clickEvents) {
+                    String jsonEvent = convertToJson(clickEvent);
+                    ProducerRecord<String, String> record = new ProducerRecord<>(CLICK_EVNTS_SRC, clickEvent.getSymbol(), jsonEvent);
+                    producer.send(record, callback);
+                }
+
+                System.out.println("Day Trading Click Events sent");
+                List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, numClickEvents);
+                for (StockTransaction transaction : transactions) {
+                    String jsonTransaction = convertToJson(transaction);
+                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TOPIC, keyFunction.apply(transaction), jsonTransaction);
+                    producer.send(record, callback);
+                }
+                System.out.println("Stock Transactions Batch Sent");
+
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    Thread.interrupted();
+                }
+            }
+            System.out.println("Done generating stock data");
+
+        };
+        executorService.submit(produceStockTransactionsTask);
+
+        
     }
 
     public static void produceStockTickerData() {

@@ -2,7 +2,7 @@ package bbejeck.chapter_6;
 
 
 import bbejeck.chapter_6.processor.MapValueProcessor;
-import bbejeck.chapter_6.processor.PrintingProcessorSupplier;
+import bbejeck.chapter_6.processor.KStreamPrinter;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
@@ -52,9 +52,9 @@ public class ZMartProcessorApp {
                 .addSink("patterns-sink", "patterns", stringSerializer, patternSerializer, "patterns-processor");
 
 
-        builder.addProcessor("purchase-printer", new PrintingProcessorSupplier("purchase"), "masking-processor")
-                .addProcessor("rewards-printer", new PrintingProcessorSupplier("rewards"), "rewards-processor")
-                .addProcessor("patterns-printer", new PrintingProcessorSupplier("pattens"), "patterns-processor");
+        builder.addProcessor("purchase-printer", new KStreamPrinter("purchase"), "masking-processor")
+                .addProcessor("rewards-printer", new KStreamPrinter("rewards"), "rewards-processor")
+                .addProcessor("patterns-printer", new KStreamPrinter("pattens"), "patterns-processor");
 
         KafkaStreams kafkaStreams = new KafkaStreams(builder, streamsConfig);
         System.out.println("ZMart Processor App Started");

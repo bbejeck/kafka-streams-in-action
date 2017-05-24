@@ -75,7 +75,7 @@ public class AggregationsAndReducingExample {
 
 
         KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder, streamsConfig);
-        MockDataProducer.produceStockTransactions(15, 50, 25);
+        MockDataProducer.produceStockTransactions(15, 50, 25, transaction -> null);
         System.out.println("First Reduction and Aggregation Example Application Started");
         kafkaStreams.start();
         Thread.sleep(65000);

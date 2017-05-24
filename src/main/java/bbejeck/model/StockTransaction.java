@@ -120,6 +120,38 @@ public class StockTransaction {
                 '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof StockTransaction)) return false;
+
+        StockTransaction that = (StockTransaction) o;
+
+        if (shares != that.shares) return false;
+        if (Double.compare(that.sharePrice, sharePrice) != 0) return false;
+        if (purchase != that.purchase) return false;
+        if (symbol != null ? !symbol.equals(that.symbol) : that.symbol != null) return false;
+        if (sector != null ? !sector.equals(that.sector) : that.sector != null) return false;
+        if (industry != null ? !industry.equals(that.industry) : that.industry != null) return false;
+        if (customerId != null ? !customerId.equals(that.customerId) : that.customerId != null) return false;
+        return transactionTimestamp != null ? transactionTimestamp.equals(that.transactionTimestamp) : that.transactionTimestamp == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        result = symbol != null ? symbol.hashCode() : 0;
+        result = 31 * result + (sector != null ? sector.hashCode() : 0);
+        result = 31 * result + (industry != null ? industry.hashCode() : 0);
+        result = 31 * result + shares;
+        temp = Double.doubleToLongBits(sharePrice);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (customerId != null ? customerId.hashCode() : 0);
+        result = 31 * result + (transactionTimestamp != null ? transactionTimestamp.hashCode() : 0);
+        result = 31 * result + (purchase ? 1 : 0);
+        return result;
+    }
 
     public static final class Builder {
         private String symbol;

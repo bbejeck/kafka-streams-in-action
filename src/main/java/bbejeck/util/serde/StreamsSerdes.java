@@ -1,6 +1,7 @@
 package bbejeck.util.serde;
 
 import bbejeck.collectors.FixedSizePriorityQueue;
+import bbejeck.model.DayTradingAppClickEvent;
 import bbejeck.model.StockPerformance;
 import bbejeck.model.TransactionSummary;
 import bbejeck.model.ShareVolume;
@@ -9,12 +10,16 @@ import bbejeck.model.PurchasePattern;
 import bbejeck.model.RewardAccumulator;
 import bbejeck.model.StockTickerData;
 import bbejeck.model.StockTransaction;
+import bbejeck.util.collection.Tuple;
 import bbejeck.util.serializer.JsonDeserializer;
 import bbejeck.util.serializer.JsonSerializer;
+import com.google.gson.reflect.TypeToken;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 
+import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 
 
@@ -56,6 +61,21 @@ public class StreamsSerdes {
         return new StockPerformanceSerde();
     }
 
+    public static Serde<Tuple<List<DayTradingAppClickEvent>, List<StockTransaction>>> EventTransactionTupleSerde() {
+        return new EventTransactionTupleSerde();
+    }
+
+    public static Serde<DayTradingAppClickEvent> ClickEventSerde() {
+        return new ClickEventSerde();
+    }
+
+    public static Serde<List<DayTradingAppClickEvent>> EventListSerde() {
+        return new EventsListSerde();
+    }
+
+    public static Serde<List<StockTransaction>> TransactionsListSerde() {
+        return  new TransactionsListSerde();
+    }
 
     public static final class PurchasePatternsSerde extends WrapperSerde<PurchasePattern> {
         public PurchasePatternsSerde() {
@@ -111,7 +131,32 @@ public class StreamsSerdes {
         }
     }
 
+    public static final class EventTransactionTupleSerde extends WrapperSerde<Tuple<List<DayTradingAppClickEvent>, List<StockTransaction>>> {
+            private static final Type tupleType = new TypeToken<Tuple<List<DayTradingAppClickEvent>, List<StockTransaction>>>(){}.getType();
+        public EventTransactionTupleSerde() {
+            super(new JsonSerializer<>(), new JsonDeserializer<>(tupleType));
+        }
+    }
 
+    public static final class ClickEventSerde extends WrapperSerde<DayTradingAppClickEvent> {
+        public ClickEventSerde () {
+            super(new JsonSerializer<>(), new JsonDeserializer<>(DayTradingAppClickEvent.class));
+        }
+    }
+
+    public static final class TransactionsListSerde extends  WrapperSerde<List<StockTransaction>>  {
+        private static final Type listType = new TypeToken<List<StockTransaction>>(){}.getType();
+        public TransactionsListSerde() {
+            super(new JsonSerializer<>(), new JsonDeserializer<>(listType));
+        }
+    }
+
+    public static final class EventsListSerde extends  WrapperSerde<List<DayTradingAppClickEvent>>  {
+        private static final Type listType = new TypeToken<List<DayTradingAppClickEvent>>(){}.getType();
+        public EventsListSerde() {
+            super(new JsonSerializer<>(), new JsonDeserializer<>(listType));
+        }
+    }
 
     private static class WrapperSerde<T> implements Serde<T> {
 

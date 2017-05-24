@@ -1,5 +1,6 @@
 package bbejeck.util.datagen;
 
+import bbejeck.model.DayTradingAppClickEvent;
 import bbejeck.model.PublicTradedCompany;
 import bbejeck.model.Purchase;
 import bbejeck.model.StockTransaction;
@@ -29,7 +30,7 @@ public class DataGenerator {
     public static final int NUM_ITERATIONS = 10;
 
     private static Faker dateFaker = new Faker();
-    private static Supplier<Date> timestampGenerator = () -> dateFaker.date().past(12, TimeUnit.HOURS, new Date());
+    private static Supplier<Date> timestampGenerator = () -> dateFaker.date().past(15, TimeUnit.MINUTES, new Date());
 
     private DataGenerator() {
     }
@@ -59,6 +60,18 @@ public class DataGenerator {
             news.add(faker.company().bs());
         }
         return news;
+    }
+
+
+    public static List<DayTradingAppClickEvent> generateDayTradingClickEvents(int numberEvents, List<PublicTradedCompany> companies) {
+        List<DayTradingAppClickEvent> clickEvents = new ArrayList<>(numberEvents);
+        Faker faker = new Faker();
+        for (int i = 0; i < numberEvents; i++) {
+            String symbol = companies.get(faker.number().numberBetween(0,companies.size())).getSymbol();
+            clickEvents.add(new DayTradingAppClickEvent(symbol, faker.internet().url(),timestampGenerator.get().toInstant()));
+        }
+
+        return clickEvents;
     }
 
     public static List<Purchase> generatePurchases(int number, int numberCustomers) {

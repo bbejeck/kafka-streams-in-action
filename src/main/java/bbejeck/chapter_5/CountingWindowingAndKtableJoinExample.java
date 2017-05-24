@@ -18,7 +18,6 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.SessionWindows;
-import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.ValueJoiner;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
@@ -89,7 +88,7 @@ public class CountingWindowingAndKtableJoinExample {
         
         DataGenerator.setTimestampGenerator(() -> dateGenerator.get());
         
-        MockDataProducer.produceStockTransactions(2, 5, 3);
+        MockDataProducer.produceStockTransactions(2, 5, 3, transaction -> null);
 
         System.out.println("Starting Aggregation and Joins Example");
         kafkaStreams.start();

@@ -54,7 +54,7 @@ configurations {
 
 dependencies {
     compile group: 'com.google.code.gson', name: 'gson', version:'2.6.1'
-    compile group: 'com.google.guava', name: 'guava', version:'20.0'
+    compile group: 'com.google.guava', name: 'guava', version:'21.0'
     compile group: 'org.apache.commons', name: 'commons-lang3', version:'3.1'
     compile group: 'com.101tec', name:'zkclient', version:'0.7'
     compile group: 'com.yammer.metrics', name:'metrics-core', version:'2.2.0'

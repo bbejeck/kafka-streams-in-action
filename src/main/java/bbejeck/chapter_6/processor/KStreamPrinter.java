@@ -5,11 +5,11 @@ import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorSupplier;
 
 
-public class PrintingProcessorSupplier implements ProcessorSupplier {
+public class KStreamPrinter implements ProcessorSupplier {
     private String name;
 
 
-    public PrintingProcessorSupplier(String name) {
+    public KStreamPrinter(String name) {
         this.name = name;
     }
 
@@ -24,7 +24,7 @@ public class PrintingProcessorSupplier implements ProcessorSupplier {
         private String name;
 
 
-        public PrintingProcessor(String name) {
+         PrintingProcessor(String name) {
             this.name = name;
         }
 

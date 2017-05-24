@@ -17,19 +17,14 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
-import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.SessionWindows;
-import org.apache.kafka.streams.kstream.ValueJoiner;
 import org.apache.kafka.streams.kstream.Windowed;
-import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
-import org.apache.kafka.streams.kstream.internals.WindowedSerializer;
 
 import java.time.Duration;
 import java.util.Properties;
 
 import static bbejeck.clients.producer.MockDataProducer.STOCK_TOPIC;
-import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.EARLIEST;
 import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.LATEST;
 
 public class GlobalKTableExample {
@@ -82,7 +77,7 @@ public class GlobalKTableExample {
 
         DataGenerator.setTimestampGenerator(() -> dateGenerator.get());
 
-        MockDataProducer.produceStockTransactions(2, 5, 3);
+        MockDataProducer.produceStockTransactions(2, 5, 3, transaction -> null);
 
         System.out.println("Starting Aggregation and Joins Example");
         kafkaStreams.start();

@@ -1,6 +1,7 @@
 package bbejeck.model;
 
 
+import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.ArrayDeque;
 
@@ -12,10 +13,12 @@ public class StockPerformance {
     private double priceDifferential = 0.0;
     private double shareDifferential = 0.0;
     private int currentShareVolume = 0;
-    private double currentAveragePrice = Double.NaN;
-    private double currentAverageVolume = Double.NaN;
+    private double currentAveragePrice = Double.MIN_VALUE;
+    private double currentAverageVolume = Double.MIN_VALUE;
     private ArrayDeque<Double> shareVolumeLookback = new ArrayDeque<>(MAX_LOOK_BACK);
     private ArrayDeque<Double> sharePriceLookback = new ArrayDeque<>(MAX_LOOK_BACK);
+    private transient DecimalFormat decimalFormat = new DecimalFormat("#.00");
+    
 
 
     public void setLastUpdateSent(Instant lastUpdateSent) {
@@ -35,7 +38,7 @@ public class StockPerformance {
     }
 
     private double calculateDifferentialFromAverage(double value, double average) {
-        return average != Double.NaN ? ((value / average) - 1) * 100.0 : 0.0;
+        return average != Double.MIN_VALUE ? ((value / average) - 1) * 100.0 : 0.0;
     }
 
     private double calculateNewAverage(double newValue, double currentAverage, ArrayDeque<Double> deque) {
@@ -82,4 +85,16 @@ public class StockPerformance {
         return lastUpdateSent;
     }
 
+    @Override
+    public String toString() {
+        return "StockPerformance{" +
+                "lastUpdateSent= " + lastUpdateSent +
+                ", currentPrice= " + decimalFormat.format(currentPrice) +
+                ", currentAveragePrice= " + decimalFormat.format(currentAveragePrice) +
+                ", percentage difference= " + decimalFormat.format(priceDifferential) +
+                ", currentShareVolume= " + decimalFormat.format(currentShareVolume) +
+                ", currentAverageVolume= " + decimalFormat.format(currentAverageVolume) +
+                ", shareDifferential= " + decimalFormat.format(shareDifferential) +
+                '}';
+    }
 }
