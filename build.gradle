@@ -39,6 +39,28 @@ task runAddStateAppChapter_4(type: JavaExec) {
 }
 
 
+task runAggregationsChapter_5(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_5.AggregationsAndReducingExample"
+}
+
+task runCountingWindowingChapter_5(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_5.CountingWindowingAndKtableJoinExample"
+}
+
+task runGlobalKtableChapter_5(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_5.GlobalKTableExample"
+}
+
+
+task runKStreamKTableChapter_5(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_5.KStreamVsKTableExample"
+}
+
+
 jar {
   archiveName='bbejeck-kafka-streams-in-action-1.0-SNAPSHOT.jar'
 }

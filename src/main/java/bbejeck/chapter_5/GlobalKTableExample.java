@@ -17,20 +17,16 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
-import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.SessionWindows;
-import org.apache.kafka.streams.kstream.ValueJoiner;
 import org.apache.kafka.streams.kstream.Windowed;
-import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
-import org.apache.kafka.streams.kstream.internals.WindowedSerializer;
 
 import java.time.Duration;
 import java.util.Properties;
 
 import static bbejeck.clients.producer.MockDataProducer.STOCK_TOPIC;
-import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.EARLIEST;
 import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.LATEST;
+import static bbejeck.util.Topics.*;
 
 public class GlobalKTableExample {
 
@@ -60,11 +56,11 @@ public class GlobalKTableExample {
                         .count(SessionWindows.with(twentySeconds), "session-windowed-customer-transaction-counts")
                         .toStream().map(transactionMapper);
 
-        GlobalKTable<String, String> publicCompanies = kStreamBuilder.globalTable("companies", "global-company-store");
-        GlobalKTable<String, String> clients = kStreamBuilder.globalTable("clients", "global-clients-store");
+        GlobalKTable<String, String> publicCompanies = kStreamBuilder.globalTable(COMPANIES.topicName(), "global-company-store");
+        GlobalKTable<String, String> clients = kStreamBuilder.globalTable(CLIENTS.topicName(), "global-clients-store");
 
 
-        countStream.leftJoin(publicCompanies, (key, txn) -> txn.getStockTicker(),TransactionSummary::withCompmanyName)
+        countStream.leftJoin(publicCompanies, (key, txn) -> txn.getStockTicker(),TransactionSummary::withCompanyName)
                 .leftJoin(clients, (key, txn) -> txn.getCustomerId(), TransactionSummary::withCustomerName)
                 .print(stringSerde, transactionSummarySerde,"Resolved Transaction Summaries");
 
@@ -82,12 +78,13 @@ public class GlobalKTableExample {
 
         DataGenerator.setTimestampGenerator(() -> dateGenerator.get());
 
-        MockDataProducer.produceStockTransactions(2, 5, 3);
+        MockDataProducer.produceStockTransactions(2, 5, 3, true);
 
-        System.out.println("Starting Aggregation and Joins Example");
+        System.out.println("Starting GlobalKTable Example");
+        kafkaStreams.cleanUp();
         kafkaStreams.start();
         Thread.sleep(65000);
-        System.out.println("Shutting down the Reduction and Aggregation Example Application now");
+        System.out.println("Shutting down the GlobalKTable Example Application now");
         kafkaStreams.close();
         MockDataProducer.shutdown();
     }

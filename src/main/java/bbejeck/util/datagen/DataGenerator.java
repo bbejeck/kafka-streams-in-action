@@ -207,6 +207,22 @@ public class DataGenerator {
             this.customerId = customerId;
             this.creditCardNumber = creditCardNumber;
         }
+
+        public String getFirstName() {
+            return firstName;
+        }
+
+        public String getLastName() {
+            return lastName;
+        }
+
+        public String getCustomerId() {
+            return customerId;
+        }
+
+        public String getCreditCardNumber() {
+            return creditCardNumber;
+        }
     }
 
     private static class Store {

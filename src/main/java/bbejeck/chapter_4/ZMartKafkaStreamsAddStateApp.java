@@ -40,10 +40,7 @@ import java.util.Properties;
 public class ZMartKafkaStreamsAddStateApp {
 
     public static void main(String[] args) throws Exception {
-
-        //Used only to produce data for this application, not typical usage
-        MockDataProducer.producePurchaseData();
-
+        
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
 
         Serde<Purchase> purchaseSerde = StreamsSerdes.PurchaseSerde();
@@ -85,9 +82,15 @@ public class ZMartKafkaStreamsAddStateApp {
         statefulRewardAccumulator.to(stringSerde, rewardAccumulatorSerde, "rewards");
 
 
+
+        //Used only to produce data for this application, not typical usage
+        MockDataProducer.producePurchaseData();
+
+        
         System.out.println("Starting Adding State Example");
         KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder,streamsConfig);
         System.out.println("ZMart Adding State Application Started");
+        kafkaStreams.cleanUp();
         kafkaStreams.start();
         Thread.sleep(65000);
         System.out.println("Shutting down the Add State Application now");

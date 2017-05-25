@@ -1,6 +1,24 @@
 ### Source Code for Kafka Streams in Action
 
 
+#### Updates
+
+Here are some notes regarding the source code:
+
+1. For the examples in Chapter 5 since they rely more on timestamps and potential joins, sometimes it takes a few seconds for
+data to show up, please be patient.
+
+2. If at first you don't get any results, re-run the example.  It could be a topic does not
+exist yet, but Kafka is configured to create topics automatically.
+
+3. I will be updating this file with a "road map" of where in the book maps to
+which examples.
+
+4. There are some exciting new features coming in the 0.11 release of Kafka and Kafka Streams coming early to mid June, stay tuned
+as this code base will evolve.
+
+
+
 #### Requirements
 This project assumes and requires the following
 
@@ -67,6 +85,10 @@ we have so far:
 3. ./gradlew runZmartAdvancedChapter_3
 4. ./gradlew runAddStateAppChapter_4
 5. ./gradlew runJoinsExampleAppChapter_4
+6. ./gradlew runAggregationsChapter_5
+7. ./gradlew runCountingWindowingChapter_5
+8. ./gradlew runGlobalKtableChapter_5
+9. ./gradlew runKStreamKTableChapter_5
 
 #### Example Kafka Streams Program Output
 When running the examples, the program will generate data to flow through Kafka and into the sample

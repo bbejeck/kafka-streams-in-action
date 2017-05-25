@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import static bbejeck.util.datagen.DataGenerator.NUMBER_TRADED_COMPANIES;
 import static bbejeck.util.datagen.DataGenerator.NUMBER_UNIQUE_CUSTOMERS;
 import static bbejeck.util.datagen.DataGenerator.NUM_ITERATIONS;
+import static bbejeck.util.Topics.*;
 
 /**
  * Class will produce 100 Purchase records per iteration
@@ -75,30 +76,24 @@ public class MockDataProducer {
         producePurchaseData(numberIterations, NUMBER_TRADED_COMPANIES, NUMBER_UNIQUE_CUSTOMERS);
     }
 
-    public static void produceNewsAndStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers){
+    public static void produceNewsAndStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers) {
         List<String> news = DataGenerator.generateFinancialNews();
 
     }
 
-    public static void produceStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers) {
-        List<PublicTradedCompany> companies = DataGenerator.generatePublicTradedCompanies(numberTradedCompanies);
-        List<DataGenerator.Customer> customers = DataGenerator.generateCustomers(numberCustomers);
-        Set<String> industrySet = new HashSet<>();
-        for (PublicTradedCompany company : companies) {
-             industrySet.add(company.getIndustry());
-        }
-        List<String> news = DataGenerator.generateFinancialNews();
+    public static void produceStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers, boolean populateGlobalTables) {
+        List<PublicTradedCompany> companies = getPublicTradedCompanies(numberTradedCompanies);
+        List<DataGenerator.Customer> customers = getCustomers(numberCustomers);
 
+        if (populateGlobalTables) {
+            populateCompaniesGlobalKTable(companies);
+            populateCustomersGlobalKTable(customers);
+        }
+
+        publishFinancialNews(companies);
         Runnable produceStockTransactionsTask = () -> {
             init();
             int counter = 0;
-            for (String industry : industrySet) {
-                ProducerRecord<String, String> record = new ProducerRecord<>(FINANCIAL_NEWS, industry, news.get(counter++));
-                producer.send(record, callback);
-            }
-
-            System.out.println("Financial news sent");
-            counter = 0;
             while (counter++ < numberIterations) {
                 List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, 50);
                 List<String> jsonTransactions = convertToJson(transactions);
@@ -118,6 +113,47 @@ public class MockDataProducer {
 
         };
         executorService.submit(produceStockTransactionsTask);
+    }
+
+
+    private static void populateCustomersGlobalKTable(List<DataGenerator.Customer> customers) {
+        init();
+        for (DataGenerator.Customer customer : customers) {
+            String customerName = customer.getLastName() + ", " + customer.getFirstName();
+            ProducerRecord<String, String> record = new ProducerRecord<>(CLIENTS.topicName(), customer.getCustomerId(), customerName);
+            producer.send(record, callback);
+        }
+    }
+
+    private static void populateCompaniesGlobalKTable(List<PublicTradedCompany> companies) {
+        init();
+        for (PublicTradedCompany company : companies) {
+            ProducerRecord<String, String> record = new ProducerRecord<>(COMPANIES.topicName(), company.getSymbol(), company.getName());
+            producer.send(record, callback);
+        }
+    }
+
+    private static void publishFinancialNews(List<PublicTradedCompany> companies) {
+        init();
+        Set<String> industrySet = new HashSet<>();
+        for (PublicTradedCompany company : companies) {
+            industrySet.add(company.getIndustry());
+        }
+        List<String> news = DataGenerator.generateFinancialNews();
+        int counter = 0;
+        for (String industry : industrySet) {
+            ProducerRecord<String, String> record = new ProducerRecord<>(FINANCIAL_NEWS, industry, news.get(counter++));
+            producer.send(record, callback);
+        }
+        System.out.println("Financial news sent");
+    }
+
+    private static List<DataGenerator.Customer> getCustomers(int numberCustomers) {
+        return DataGenerator.generateCustomers(numberCustomers);
+    }
+
+    private static List<PublicTradedCompany> getPublicTradedCompanies(int numberTradedCompanies) {
+        return DataGenerator.generatePublicTradedCompanies(numberTradedCompanies);
     }
 
     public static void produceStockTickerData() {
@@ -203,22 +239,24 @@ public class MockDataProducer {
     }
 
     private static void init() {
-        System.out.println("Initializing the producer");
-        Properties properties = new Properties();
-        properties.put("bootstrap.servers", "localhost:9092");
-        properties.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        properties.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        properties.put("acks", "1");
-        properties.put("retries", "3");
+        if (producer == null) {
+            System.out.println("Initializing the producer");
+            Properties properties = new Properties();
+            properties.put("bootstrap.servers", "localhost:9092");
+            properties.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+            properties.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+            properties.put("acks", "1");
+            properties.put("retries", "3");
 
-        producer = new KafkaProducer<>(properties);
+            producer = new KafkaProducer<>(properties);
 
-        callback = (metadata, exception) -> {
-            if (exception != null) {
-                exception.printStackTrace();
-            }
-        };
-        System.out.println("Producer initialized");
+            callback = (metadata, exception) -> {
+                if (exception != null) {
+                    exception.printStackTrace();
+                }
+            };
+            System.out.println("Producer initialized");
+        }
     }
 
 

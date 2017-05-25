@@ -41,9 +41,10 @@ public class KStreamVsKTableExample {
 
         KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder, streamsConfig);
         System.out.println("KTable vs KStream output started");
+        kafkaStreams.cleanUp();
         kafkaStreams.start();
         Thread.sleep(15000);
-        System.out.println("Shutting down the Kafka Streams Application now");
+        System.out.println("Shutting down KTable vs KStream Application now");
         kafkaStreams.close();
         MockDataProducer.shutdown();
 

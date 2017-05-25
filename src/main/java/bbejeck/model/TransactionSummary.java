@@ -8,7 +8,7 @@ public class TransactionSummary {
     private String industry;
     private long summaryCount;
     private String customerName;
-    private String compmanyName;
+    private String companyName;
 
 
     public TransactionSummary(String customerId, String stockTicker, String industry) {
@@ -47,11 +47,11 @@ public class TransactionSummary {
     }
 
     public String getCompmanyName() {
-        return compmanyName;
+        return companyName;
     }
 
-    public TransactionSummary withCompmanyName(String compmanyName) {
-        this.compmanyName = compmanyName;
+    public TransactionSummary withCompanyName(String companyName) {
+        this.companyName = companyName;
         return this;
     }
 
@@ -64,6 +64,8 @@ public class TransactionSummary {
         return "TransactionSummary{" +
                 "customerId='" + customerId + '\'' +
                 ", stockTicker='" + stockTicker + '\'' +
+                ", customerName='" + customerName + '\'' +
+                ", companyName='" + companyName + '\'' +
                 '}';
     }
 }
