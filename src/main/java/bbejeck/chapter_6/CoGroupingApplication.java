@@ -46,7 +46,7 @@ public class CoGroupingApplication {
 
 
         TopologyBuilder builder = new TopologyBuilder();
-        String stocksStateStore = "stock-performance-store";
+        String stocksStateStore = "stock-transactions-store";
         String dayTradingEventClicksStore = "day-trading-clicks-store";
 
         StockTransactionCogroupingProcessor transactionProcessor = new StockTransactionCogroupingProcessor(stocksStateStore);
