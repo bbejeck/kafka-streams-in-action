@@ -5,7 +5,7 @@ KAFKA_HOME=$1
 ZK_HOST=$2
 ZK_PORT=$3
 
-topics="src-topic patterns rewards purchases stocks stocks-out transaction-summary coffee electronics transactions customer_transactions"
+topics="src-topic patterns rewards purchases stocks stocks-out transaction-summary coffee electronics transactions customer_transactions events cogrouped-results stock-performance"
 
 for topic in ${topics}; do
      echo "attempting to create topic ${topic}"

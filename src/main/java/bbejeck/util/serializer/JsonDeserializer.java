@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.kafka.common.serialization.Deserializer;
 
+import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
@@ -33,9 +34,20 @@ public class JsonDeserializer<T> implements Deserializer<T> {
 
     private Gson gson;
     private Class<T> deserializedClass;
+    private Type reflectionTypeToken;
 
     public JsonDeserializer(Class<T> deserializedClass) {
         this.deserializedClass = deserializedClass;
+        init();
+
+    }
+
+    public JsonDeserializer(Type reflectionTypeToken) {
+        this.reflectionTypeToken = reflectionTypeToken;
+        init();
+    }
+
+    private void init () {
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(FixedSizePriorityQueue.class, new FixedSizePriorityQueueAdapter().nullSafe());
         gson = builder.create();
@@ -58,7 +70,9 @@ public class JsonDeserializer<T> implements Deserializer<T> {
              return null;
          }
 
-         return gson.fromJson(new String(bytes),deserializedClass);
+         Type deserializeFrom = deserializedClass != null ? deserializedClass : reflectionTypeToken;
+
+         return gson.fromJson(new String(bytes),deserializeFrom);
 
     }
 
