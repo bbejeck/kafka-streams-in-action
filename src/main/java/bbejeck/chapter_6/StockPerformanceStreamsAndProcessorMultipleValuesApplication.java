@@ -2,7 +2,6 @@ package bbejeck.chapter_6;
 
 
 import bbejeck.chapter_6.transformer.StockPerformanceMultipleValuesTransformerSupplier;
-import bbejeck.chapter_6.transformer.StockPerformanceTransformerSupplier;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTransaction;
@@ -49,7 +48,7 @@ public class StockPerformanceStreamsAndProcessorMultipleValuesApplication {
 
 
         KafkaStreams kafkaStreams = new KafkaStreams(builder, streamsConfig);
-        MockDataProducer.produceStockTransactions(50, 50, 25, StockTransaction::getSymbol);
+        MockDataProducer.produceStockTransactionsWithKeyFunction(50, 50, 25, StockTransaction::getSymbol);
         System.out.println("Stock Analysis KStream/Process API App Started");
         kafkaStreams.cleanUp();
         kafkaStreams.start();

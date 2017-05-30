@@ -121,7 +121,7 @@ public class MockDataProducer {
 
     }
 
-    public static void produceStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers, Function<StockTransaction, String> keyFunction) {
+    public static void produceStockTransactionsWithKeyFunction(int numberIterations, int numberTradedCompanies, int numberCustomers, Function<StockTransaction, String> keyFunction) {
         List<PublicTradedCompany> companies = DataGenerator.generatePublicTradedCompanies(numberTradedCompanies);
         List<DataGenerator.Customer> customers = DataGenerator.generateCustomers(numberCustomers);
         Set<String> industrySet = new HashSet<>();
