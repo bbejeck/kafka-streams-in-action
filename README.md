@@ -5,17 +5,17 @@
 
 Here are some notes regarding the source code:
 
-1. For the examples in Chapter 5 since they rely more on timestamps and potential joins, sometimes it takes a few seconds for
+1. For the examples in Chapters 5 and 6 since they rely more on timestamps and potential joins, sometimes it takes a few seconds for
 data to show up, please be patient.
 
-2. If at first you don't get any results, re-run the example.  It could be a topic does not
+2. If at first you don't get any results, re-run the example.  It could be a I missed adding a topic name to the create-topics.sh script and the topic does not
 exist yet, but Kafka is configured to create topics automatically.
 
 3. I will be updating this file with a "road map" of where in the book maps to
 which examples.
 
 4. There are some exciting new features coming in the 0.11 release of Kafka and Kafka Streams coming early to mid June, stay tuned
-as this code base will evolve.
+as this code base will evolve.  Which also means we won't bundle the Kafka dependencies but include them in the gradle file.
 
 
 
@@ -72,8 +72,12 @@ common code used across all chapters, or utility code.
 All of the example programs can be run from within an IDE or from the command line.  There are gradle
 tasks for each of the examples we have so far.  The provided Kafka will need to be running before
 you can start any of the examples.  Also there is a script in the bin directory (create-topics.sh) that creates all topics
-required.  If you don't run the script that's fine, Kafka auto-creates topics by default.  For the purposes
+required (I think I've added all topics, but may have missed one or two).  If you don't run the script that's fine, Kafka auto-creates topics by default.  For the purposes
 of our examples that is fine.
+
+All examples should print to the console by default.  Some may write out to topics and print to standard-out
+but if you don't see anything in the console you should check the source code to make sure
+I did'nt miss adding a print statement.
 
 To run any of the example programs, I recommend running them through the set gradle tasks.  Remember if you are
 windows use gradlew instead  ./gradlew to run the program.  All the 
@@ -89,6 +93,10 @@ we have so far:
 7. ./gradlew runCountingWindowingChapter_5
 8. ./gradlew runGlobalKtableChapter_5
 9. ./gradlew runKStreamKTableChapter_5
+10. ./gradlew runPopsHopsChapter_6
+11. ./gradlew runStockPerformance_Chapter_6
+12. ./gradlew runStockPerformanceStreamsProcess_Chapter_6
+13. ./gradlew runCoGrouping_Chapter_6
 
 #### Example Kafka Streams Program Output
 When running the examples, the program will generate data to flow through Kafka and into the sample

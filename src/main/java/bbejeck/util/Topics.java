@@ -20,6 +20,12 @@ public enum Topics {
         public String toString() {
             return "financial-news";
         }
+    },
+    POPS_HOPS_PURCHASES {
+        @Override
+        public String topicName() {
+            return "pops-hops-purchases";
+        }
     };
 
 

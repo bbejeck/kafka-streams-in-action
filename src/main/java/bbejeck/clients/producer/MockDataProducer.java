@@ -1,10 +1,12 @@
 package bbejeck.clients.producer;
 
+import bbejeck.model.BeerPurchase;
 import bbejeck.model.DayTradingAppClickEvent;
 import bbejeck.model.PublicTradedCompany;
 import bbejeck.model.Purchase;
 import bbejeck.model.StockTickerData;
 import bbejeck.model.StockTransaction;
+import bbejeck.util.Topics;
 import bbejeck.util.datagen.DataGenerator;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -83,6 +85,31 @@ public class MockDataProducer {
     public static void produceNewsAndStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers) {
         List<String> news = DataGenerator.generateFinancialNews();
 
+    }
+
+    public static void produceBeerPurchases(int numberIterations) {
+        Runnable produceBeerSales = () -> {
+            init();
+            int counter = 0;
+            while (counter++ < numberIterations) {
+                List<BeerPurchase> beerPurchases = DataGenerator.generateBeerPurchases( 50);
+                List<String> jsonTransactions = convertToJson(beerPurchases);
+                for (String jsonTransaction : jsonTransactions) {
+                    ProducerRecord<String, String> record = new ProducerRecord<>(Topics.POPS_HOPS_PURCHASES.topicName(), null, jsonTransaction);
+                    producer.send(record, callback);
+                }
+                System.out.println("Beer Purchases Sent");
+
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    Thread.interrupted();
+                }
+            }
+            System.out.println("Done generating beer purchases");
+
+        };
+        executorService.submit(produceBeerSales);
     }
 
     public static void produceStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers, boolean populateGlobalTables) {

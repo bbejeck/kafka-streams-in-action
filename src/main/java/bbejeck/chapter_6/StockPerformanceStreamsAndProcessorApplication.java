@@ -44,6 +44,7 @@ public class StockPerformanceStreamsAndProcessorApplication {
         builder.stream(LATEST, stringSerde, stockTransactionSerde, "stock-transactions")
                 .transform(performanceTransformer, stocksStateStore)
                 .print(stringSerde, stockPerformanceSerde, "StockPerformance");
+                //Uncomment this line and comment out the line above for writing to a topic
                 //.to(stringSerde, stockPerformanceSerde, "stock-performance");
 
 

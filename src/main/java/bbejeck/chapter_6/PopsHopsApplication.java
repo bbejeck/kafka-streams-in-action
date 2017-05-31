@@ -2,7 +2,10 @@ package bbejeck.chapter_6;
 
 
 import bbejeck.chapter_6.processor.BeerPurchaseProcessor;
+import bbejeck.chapter_6.processor.KStreamPrinter;
+import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.BeerPurchase;
+import bbejeck.util.Topics;
 import bbejeck.util.serializer.JsonDeserializer;
 import bbejeck.util.serializer.JsonSerializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -10,6 +13,7 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.TopologyBuilder;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
@@ -21,8 +25,9 @@ import java.util.Properties;
 public class PopsHopsApplication {
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
+        StreamsConfig streamsConfig = new StreamsConfig(getProperties());
         Deserializer<BeerPurchase> beerPurchaseDeserializer = new JsonDeserializer<>(BeerPurchase.class);
         Serializer<BeerPurchase> beerPurchaseSerializer = new JsonSerializer<>();
         Serde<String> stringSerde = Serdes.String();
@@ -39,11 +44,25 @@ public class PopsHopsApplication {
 
         BeerPurchaseProcessor beerProcessor = new BeerPurchaseProcessor(domesticSalesSink, internationalSalesSink);
 
-        builder.addSource(LATEST, purchaseSourceNode, stringDeserializer, beerPurchaseDeserializer, "pops-hops-purchases")
-                .addProcessor(purchaseProcessor, () -> beerProcessor, purchaseSourceNode)
-                .addSink(internationalSalesSink,"international-sales", stringSerializer, beerPurchaseSerializer, purchaseProcessor)
-                .addSink(domesticSalesSink,"domestic-sales", stringSerializer, beerPurchaseSerializer, purchaseProcessor);
+        builder.addSource(LATEST, purchaseSourceNode, stringDeserializer, beerPurchaseDeserializer, Topics.POPS_HOPS_PURCHASES.topicName())
+                .addProcessor(purchaseProcessor, () -> beerProcessor, purchaseSourceNode);
+                //Uncomment these two lines and comment out the printer lines for writing to topics
+                //.addSink(internationalSalesSink,"international-sales", stringSerializer, beerPurchaseSerializer, purchaseProcessor)
+               // .addSink(domesticSalesSink,"domestic-sales", stringSerializer, beerPurchaseSerializer, purchaseProcessor);
 
+        //You'll have to comment these lines out if you want to write to topics as they have the same node names
+        builder.addProcessor(domesticSalesSink,new KStreamPrinter("domestic-sales"),purchaseProcessor );
+        builder.addProcessor(internationalSalesSink,new KStreamPrinter("international-sales"), purchaseProcessor );
+
+        KafkaStreams kafkaStreams = new KafkaStreams(builder, streamsConfig);
+        MockDataProducer.produceBeerPurchases(5);
+        System.out.println("Starting Pops-Hops Application now");
+        kafkaStreams.cleanUp();
+        kafkaStreams.start();
+        Thread.sleep(70000);
+        System.out.println("Shutting down Pops-Hops Application  now");
+        kafkaStreams.close();
+        MockDataProducer.shutdown();
     }
 
 

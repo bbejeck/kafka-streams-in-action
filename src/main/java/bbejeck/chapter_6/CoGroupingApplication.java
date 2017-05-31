@@ -57,9 +57,9 @@ public class CoGroupingApplication {
                 .addProcessor("txn-processor", () -> transactionProcessor, "txn-source")
                 .addProcessor("evnts-processor", () -> eventProcessor, "events-source")
                 .addStateStore(Stores.create(stocksStateStore).withStringKeys()
-                        .withValues(txnListSerde).inMemory().maxEntries(100).build(),  "evnts-processor")
+                        .withValues(txnListSerde).inMemory().maxEntries(100).build(),  "txn-processor", "evnts-processor")
                 .addStateStore(Stores.create(dayTradingEventClicksStore).withStringKeys()
-                        .withValues(eventListSerde).inMemory().maxEntries(100).build(),  "txn-processor", "evnts-processor")
+                        .withValues(eventListSerde).inMemory().maxEntries(100).build(),  "evnts-processor")
                 .addSink("tuple-sink", "cogrouped-results", stringSerializer, tupleSerializer, "evnts-processor");
 
         builder.addProcessor("print", new KStreamPrinter("Co-Grouping"), "evnts-processor");

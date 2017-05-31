@@ -60,6 +60,26 @@ task runKStreamKTableChapter_5(type: JavaExec) {
     main = "bbejeck.chapter_5.KStreamVsKTableExample"
 }
 
+task runPopsHopsChapter_6(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_6.PopsHopsApplication"
+}
+
+task runStockPerformance_Chapter_6(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_6.StockPerformanceApplication"
+}
+
+task runStockPerformanceStreamsProcess_Chapter_6(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_6.StockPerformanceStreamsAndProcessorApplication"
+}
+
+task runCoGrouping_Chapter_6(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_6.CoGroupingApplication"
+}
+
 
 jar {
   archiveName='bbejeck-kafka-streams-in-action-1.0-SNAPSHOT.jar'

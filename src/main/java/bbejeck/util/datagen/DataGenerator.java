@@ -1,5 +1,7 @@
 package bbejeck.util.datagen;
 
+import bbejeck.model.BeerPurchase;
+import bbejeck.model.Currency;
 import bbejeck.model.DayTradingAppClickEvent;
 import bbejeck.model.PublicTradedCompany;
 import bbejeck.model.Purchase;
@@ -9,6 +11,7 @@ import com.github.javafaker.Faker;
 import com.github.javafaker.Finance;
 import com.github.javafaker.Name;
 
+import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -106,6 +109,22 @@ public class DataGenerator {
 
         return purchases;
 
+    }
+
+    public static List<BeerPurchase> generateBeerPurchases(int number) {
+        List<BeerPurchase> beerPurchases = new ArrayList<>(number);
+        Faker faker = new Faker();
+        for (int i = 0; i < number; i++) {
+            Currency currency = Currency.values()[faker.number().numberBetween(1,4)];
+            String beerType = faker.beer().name();
+            int cases = faker.number().numberBetween(1,15);
+            double totalSale = faker.number().randomDouble(3,12, 200);
+            String pattern = "###.##";
+            DecimalFormat decimalFormat = new DecimalFormat(pattern);
+            double formattedSale = Double.parseDouble(decimalFormat.format(totalSale));
+            beerPurchases.add(BeerPurchase.newBuilder().beerType(beerType).currency(currency).numberCases(cases).totalSale(formattedSale).build());
+        }
+        return beerPurchases;
     }
 
     public static List<StockTransaction> generateStockTransactions(List<Customer> customers, List<PublicTradedCompany> companies, int number) {
