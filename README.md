@@ -6,7 +6,8 @@
 Here are some notes regarding the source code:
 
 1. For the examples in Chapters 5 and 6 since they rely more on timestamps and potential joins, sometimes it takes a few seconds for
-data to show up, please be patient.
+data to show up.  Additionally random data is generated for each run of an example
+so example runs produce better data than others.  Please be patient.
 
 2. If at first you don't get any results, re-run the example.  It could be a I missed adding a topic name to the create-topics.sh script and the topic does not
 exist yet, but Kafka is configured to create topics automatically.
@@ -15,7 +16,7 @@ exist yet, but Kafka is configured to create topics automatically.
 which examples.
 
 4. There are some exciting new features coming in the 0.11 release of Kafka and Kafka Streams coming early to mid June, stay tuned
-as this code base will evolve.  Which also means we won't bundle the Kafka dependencies but include them in the gradle file.
+as this code base will evolve.  Which also means we won't need to bundle the Kafka dependencies but include them in the gradle file.
 
 
 
