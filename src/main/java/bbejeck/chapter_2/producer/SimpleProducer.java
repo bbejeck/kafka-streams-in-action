@@ -11,9 +11,10 @@ import java.util.Properties;
 import java.util.concurrent.Future;
 
 /**
- * User: Bill Bejeck
- * Date: 11/20/16
- * Time: 7:36 PM
+ * Example of a simple producer, not meant to run as a stand alone example.
+ *
+ * If desired to run this example change the ProducerRecord below to
+ * use a real topic name and comment out line #33 below.
  */
 public class SimpleProducer {
 
@@ -28,6 +29,7 @@ public class SimpleProducer {
         properties.put("acks", "1");
         properties.put("retries", "3");
         properties.put("compression.type", "snappy");
+        //This line in for demonstration purposes
         properties.put("partitioner.class", PurchaseKeyPartitioner.class.getName());
 
 

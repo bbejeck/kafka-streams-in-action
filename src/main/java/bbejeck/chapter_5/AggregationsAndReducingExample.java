@@ -71,7 +71,7 @@ public class AggregationsAndReducingExample {
                         "volume-shares-industry-store")
                 .mapValues(valueMapper)
                 //.to("stock-volume-by-company") //commented out for printing to console, un-comment to write to topic
-                .print("Stock volume by Industry");
+                .toStream().print("Stock volume by Industry");
 
 
         KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder, streamsConfig);
@@ -96,10 +96,10 @@ public class AggregationsAndReducingExample {
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         props.put(ConsumerConfig.METADATA_MAX_AGE_CONFIG, "10000");
-        props.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
-        props.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
+        props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
         return props;
 
     }

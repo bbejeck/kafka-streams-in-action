@@ -60,8 +60,12 @@ public class ClickEventCogroupingProcessor extends AbstractProcessor<String, Day
           List<DayTradingAppClickEvent> eventsSoFar = keyValue.value;
           List<StockTransaction> txnsSoFar = transactionsStore.delete(key);
 
-          if (txnsSoFar == null){
+          if (txnsSoFar == null) {
               txnsSoFar = new ArrayList<>();
+          }
+
+          if (eventsSoFar == null) {
+               eventsSoFar = new ArrayList<>();
           }
 
           if (!eventsSoFar.isEmpty() || !txnsSoFar.isEmpty()) {

@@ -31,12 +31,14 @@ the first time you run the ./gradlew or gradlew command gradle will be installed
 
 #### Included Dependencies
 
-1. kafka_2.11-0.10.3.0 SNAPSHOT.tgz
-2. kafka-streams-0.10.3.0-SNAPSHOT.jar
-3. kafka-clients-0.10.3.0-SNAPSHOT.jar
+1. kafka_2.12-0.11.0.1-SNAPSHOT.tgz
 
-These dependencies are included because I wanted to present some of the latest features and this book
-is targeting the 0.11.0 release of Kafka for publication.  All other dependencies are taken care of via gradle.
+Now that Kafka 0.11.0.0 is released, the Kafka Streams and Kafka Client libs are no longer
+included with the source code, but are listed as dependencies in the gradle.build file. 
+
+Kafka itself (version 2.12-0.11.0.1-SNAPSHOT) is included as a convenience. 
+
+All other dependencies are taken care of via gradle.
  
 #### IDE setup
 The gradle eclipse and intellij plugins are included in the build.gradle file.
@@ -45,22 +47,22 @@ The gradle eclipse and intellij plugins are included in the build.gradle file.
 2. To set up for intellij run ./gradlew idea (for windows gradlew idea) from the base directory of this repo.
 
 #### Installing the included Kafka
-Run tar xvzf  kafka_2.11-0.10.3.0 SNAPSHOT.tgz some where on your computer.
+Run tar xvzf  2.12-0.11.0.1-SNAPSHOT.tgz some where on your computer.
 
 #### Running Kafka
-1. To start kafka go to <install dir>/kafka_2.11-0.10.3.0-SNAPSHOT/bin
+1. To start kafka go to <install dir>/2.12-0.11.0.1-SNAPSHOT/bin
 2. Run zookeeper-server-start.sh
 3. Run kafka-server-start.sh
 
-If you are on windows, go to the <install dir>/kafka_2.11-0.10.3.0-SNAPSHOT/bin/windows directory
+If you are on windows, go to the <install dir>/2.12-0.11.0.1-SNAPSHOT/bin/windows directory
 and run the .bat files with the same name and in the same order.
  
 #### Stopping Kafka
-1. To start kafka go to <install dir>/kafka_2.11-0.10.3.0-SNAPSHOT/bin
+1. To start kafka go to <install dir>/2.12-0.11.0.1-SNAPSHOT/bin
 2. Run kafka-server-stop.sh
 3. Run zookeeper-server-stop.sh
 
-If you are on windows, go to the <install dir>/kafka_2.11-0.10.3.0-SNAPSHOT/bin/windows directory
+If you are on windows, go to the <install dir>/2.12-0.11.0.1-SNAPSHOT/bin/windows directory
 and run the .bat files with the same name and in the same order.
 
 #### Sample Kafka Streams Code

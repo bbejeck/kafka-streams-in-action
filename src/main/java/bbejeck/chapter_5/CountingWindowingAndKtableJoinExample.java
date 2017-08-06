@@ -99,10 +99,11 @@ public class CountingWindowingAndKtableJoinExample {
         
         MockDataProducer.produceStockTransactions(2, 5, 3, false);
 
-        System.out.println("Starting Aggregation and Joins Example");
+        System.out.println("Starting CountingWindowing and KTableJoins Example");
+        kafkaStreams.cleanUp();
         kafkaStreams.start();
         Thread.sleep(65000);
-        System.out.println("Shutting down the Reduction and Aggregation Example Application now");
+        System.out.println("Shutting down the CountingWindowing and KTableJoins Example Application now");
         kafkaStreams.close();
         MockDataProducer.shutdown();
     }
@@ -119,10 +120,10 @@ public class CountingWindowingAndKtableJoinExample {
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         props.put(ConsumerConfig.METADATA_MAX_AGE_CONFIG, "10000");
-        props.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
-        props.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, StockTransactionTimestampExtractor.class);
+        props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, StockTransactionTimestampExtractor.class);
         return props;
 
     }
