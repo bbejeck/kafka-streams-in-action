@@ -43,7 +43,7 @@ public class StockPerformanceApplication {
 
         StockPerformanceProcessor stockPerformanceProcessor = new StockPerformanceProcessor(stocksStateStore, differentialThreshold);
 
-        builder.addSource(LATEST,"stocks-source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
+        builder.addSource("stocks-source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
                 .addProcessor("stocks-processor", () -> stockPerformanceProcessor, "stocks-source")
                 .addStateStore(Stores.create(stocksStateStore).withStringKeys()
                         .withValues(stockPerformanceSerde).inMemory().maxEntries(100).build(),"stocks-processor")
@@ -69,10 +69,11 @@ public class StockPerformanceApplication {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "stock-analysis-group");
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "stock-analysis-appid");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
-        props.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
         return props;
     }
 }

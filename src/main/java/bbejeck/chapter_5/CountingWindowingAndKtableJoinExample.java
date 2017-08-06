@@ -26,7 +26,7 @@ import org.apache.kafka.streams.kstream.internals.WindowedSerializer;
 import java.time.Duration;
 import java.util.Properties;
 
-import static bbejeck.clients.producer.MockDataProducer.STOCK_TOPIC;
+import static bbejeck.clients.producer.MockDataProducer.STOCK_TRANSACTIONS_TOPIC;
 import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.EARLIEST;
 import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.LATEST;
 
@@ -50,10 +50,19 @@ public class CountingWindowingAndKtableJoinExample {
         long fifteenMinutes = 1000 * 60 * 15;
         long fiveSeconds = 1000 * 5;
         KTable<Windowed<TransactionSummary>, Long> customerTransactionCounts =
-                 kStreamBuilder.stream(LATEST, stringSerde, transactionSerde, STOCK_TOPIC)
+                 kStreamBuilder.stream(LATEST, stringSerde, transactionSerde, STOCK_TRANSACTIONS_TOPIC)
                 .groupBy((noKey, transaction) -> TransactionSummary.from(transaction), transactionKeySerde, transactionSerde)
                 .count(SessionWindows.with(twentySeconds).until(fifteenMinutes),"session-windowed-customer-transaction-counts");
+
+                //The following are examples of different windows examples
+
+                //Tumbling window with timeout 15 minutes
                 //.count(TimeWindows.of(twentySeconds).until(fifteenMinutes),"tumbling-windowed-customer-transaction-counts");
+
+                //Tumbling window with default timeout 24 hours
+                //.count(TimeWindows.of(twentySeconds),"tumbling-windowed-customer-transaction-counts");
+
+                //Hopping window 
                 //.count(TimeWindows.of(twentySeconds).advanceBy(fiveSeconds).until(fifteenMinutes),"hopping-windowed-customer-transaction-counts");
 
         customerTransactionCounts.toStream().print(windowedSerde, Serdes.Long(),"Customer Transactions Counts");

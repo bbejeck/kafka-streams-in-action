@@ -22,7 +22,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Properties;
 
-import static bbejeck.clients.producer.MockDataProducer.STOCK_TOPIC;
+import static bbejeck.clients.producer.MockDataProducer.STOCK_TRANSACTIONS_TOPIC;
 import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.EARLIEST;
 
 public class AggregationsAndReducingExample {
@@ -57,7 +57,7 @@ public class AggregationsAndReducingExample {
 
         KStreamBuilder kStreamBuilder = new KStreamBuilder();
 
-        KTable<String, ShareVolume> shareVolume = kStreamBuilder.stream(EARLIEST, stringSerde, stockTransactionSerde, STOCK_TOPIC)
+        KTable<String, ShareVolume> shareVolume = kStreamBuilder.stream(EARLIEST, stringSerde, stockTransactionSerde, STOCK_TRANSACTIONS_TOPIC)
                 .mapValues(st -> ShareVolume.newBuilder(st).build())
                 .groupBy((k, v) -> v.getSymbol(), stringSerde, shareVolumeSerde)
                 .reduce(ShareVolume::reduce, "stock-transaction-reductions");
@@ -70,7 +70,7 @@ public class AggregationsAndReducingExample {
                         fixedSizePriorityQueueSerde,
                         "volume-shares-industry-store")
                 .mapValues(valueMapper)
-                //.to("stock-volume-by-company")
+                //.to("stock-volume-by-company") //commented out for printing to console, un-comment to write to topic
                 .print("Stock volume by Industry");
 
 

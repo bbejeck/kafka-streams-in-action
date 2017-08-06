@@ -44,7 +44,7 @@ public class PopsHopsApplication {
 
         BeerPurchaseProcessor beerProcessor = new BeerPurchaseProcessor(domesticSalesSink, internationalSalesSink);
 
-        builder.addSource(LATEST, purchaseSourceNode, stringDeserializer, beerPurchaseDeserializer, Topics.POPS_HOPS_PURCHASES.topicName())
+        builder.addSource(purchaseSourceNode, stringDeserializer, beerPurchaseDeserializer, Topics.POPS_HOPS_PURCHASES.topicName())
                 .addProcessor(purchaseProcessor, () -> beerProcessor, purchaseSourceNode);
                 //Uncomment these two lines and comment out the printer lines for writing to topics
                 //.addSink(internationalSalesSink,"international-sales", stringSerializer, beerPurchaseSerializer, purchaseProcessor)
@@ -73,9 +73,10 @@ public class PopsHopsApplication {
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "beer-app-appid");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
-        props.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
         return props;
     }
 }

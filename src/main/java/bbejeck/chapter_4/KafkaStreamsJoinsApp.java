@@ -33,6 +33,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
+import org.apache.kafka.streams.kstream.ValueJoiner;
 
 import java.util.Properties;
 
@@ -76,8 +77,15 @@ public class KafkaStreamsJoinsApp {
         KStream<String, Purchase> coffeeStream = branchesStream[COFFEE_PURCHASE];
         KStream<String, Purchase> electronicsStream = branchesStream[ELECTRONICS_PURCHASE];
 
+        ValueJoiner<Purchase, Purchase, CorrelatedPurchase> purchaseJoiner = new PurchaseJoiner();
+        JoinWindows twentyMinuteWindow =  JoinWindows.of(60 * 1000 * 20);
 
-        KStream<String, CorrelatedPurchase> joinedKStream = coffeeStream.join(electronicsStream, new PurchaseJoiner(), JoinWindows.of(20 * 60 * 1000), stringSerde, purchaseSerde, purchaseSerde);
+        KStream<String, CorrelatedPurchase> joinedKStream = coffeeStream.join(electronicsStream,
+                                                                              purchaseJoiner,
+                                                                              twentyMinuteWindow,
+                                                                              stringSerde,
+                                                                              purchaseSerde,
+                                                                              purchaseSerde);
         joinedKStream.print("joined KStream");
 
 

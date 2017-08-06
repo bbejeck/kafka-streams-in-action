@@ -43,7 +43,7 @@ public class ZMartProcessorApp {
         MapValueProcessor<String, Purchase, RewardAccumulator> rewardProcessor = new MapValueProcessor<>(purchase -> RewardAccumulator.builder(purchase).build());
         MapValueProcessor<String, Purchase, PurchasePattern> patternProcessor = new MapValueProcessor<>(purchase -> PurchasePattern.builder(purchase).build());
 
-        builder.addSource(EARLIEST,"txn-source", stringDeserializer, purchaseDeserializer, "transactions")
+        builder.addSource("txn-source", stringDeserializer, purchaseDeserializer, "transactions")
                 .addProcessor("masking-processor", () -> maskingProcessor, "txn-source")
                 .addProcessor("rewards-processor", () -> rewardProcessor, "txn-source")
                 .addProcessor("patterns-processor", () -> patternProcessor, "txn-source")
@@ -72,9 +72,10 @@ public class ZMartProcessorApp {
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "zmart-processor-appid");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
-        props.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
         return props;
     }
 }

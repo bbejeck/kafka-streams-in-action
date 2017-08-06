@@ -52,8 +52,8 @@ public class CoGroupingApplication {
         StockTransactionCogroupingProcessor transactionProcessor = new StockTransactionCogroupingProcessor(stocksStateStore);
         ClickEventCogroupingProcessor eventProcessor = new ClickEventCogroupingProcessor(stocksStateStore, dayTradingEventClicksStore);
 
-        builder.addSource(LATEST, "txn-source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
-                .addSource(LATEST, "events-source", stringDeserializer, clickEventDeserializer, "events")
+        builder.addSource("txn-source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
+                .addSource( "events-source", stringDeserializer, clickEventDeserializer, "events")
                 .addProcessor("txn-processor", () -> transactionProcessor, "txn-source")
                 .addProcessor("evnts-processor", () -> eventProcessor, "events-source")
                 .addStateStore(Stores.create(stocksStateStore).withStringKeys()
@@ -84,10 +84,11 @@ public class CoGroupingApplication {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "cogrouping-group");
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "cogrouping-appid");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"latest");
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
-        props.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
         return props;
     }
 

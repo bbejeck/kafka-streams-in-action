@@ -24,7 +24,7 @@ import org.apache.kafka.streams.kstream.Windowed;
 import java.time.Duration;
 import java.util.Properties;
 
-import static bbejeck.clients.producer.MockDataProducer.STOCK_TOPIC;
+import static bbejeck.clients.producer.MockDataProducer.STOCK_TRANSACTIONS_TOPIC;
 import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.LATEST;
 import static bbejeck.util.Topics.*;
 
@@ -51,7 +51,7 @@ public class GlobalKTableExample {
         };
 
         KStream<String, TransactionSummary> countStream =
-                kStreamBuilder.stream(LATEST, stringSerde, transactionSerde, STOCK_TOPIC)
+                kStreamBuilder.stream(LATEST, stringSerde, transactionSerde, STOCK_TRANSACTIONS_TOPIC)
                         .groupBy((noKey, transaction) -> TransactionSummary.from(transaction), transactionSummarySerde, transactionSerde)
                         .count(SessionWindows.with(twentySeconds), "session-windowed-customer-transaction-counts")
                         .toStream().map(transactionMapper);

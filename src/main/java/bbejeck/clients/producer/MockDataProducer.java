@@ -40,7 +40,7 @@ public class MockDataProducer {
     private static ExecutorService executorService = Executors.newFixedThreadPool(1);
     private static Callback callback;
     private static final String TRANSACTIONS_TOPIC = "transactions";
-    public static final String STOCK_TOPIC = "stock-transactions";
+    public static final String STOCK_TRANSACTIONS_TOPIC = "stock-transactions";
     public static final String STOCK_TICKER_TABLE_TOPIC = "stock-ticker-table";
     public static final String STOCK_TICKER_STREAM_TOPIC = "stock-ticker-stream";
     public static final String FINANCIAL_NEWS = "financial-news";
@@ -129,7 +129,7 @@ public class MockDataProducer {
                 List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, 50);
                 List<String> jsonTransactions = convertToJson(transactions);
                 for (String jsonTransaction : jsonTransactions) {
-                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TOPIC, null, jsonTransaction);
+                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TRANSACTIONS_TOPIC, null, jsonTransaction);
                     producer.send(record, callback);
                 }
                 System.out.println("Stock Transactions Batch Sent");
@@ -171,7 +171,7 @@ public class MockDataProducer {
                 List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, 50);
                 for (StockTransaction transaction : transactions) {
                     String jsonTransaction = convertToJson(transaction);
-                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TOPIC, keyFunction.apply(transaction), jsonTransaction);
+                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TRANSACTIONS_TOPIC, keyFunction.apply(transaction), jsonTransaction);
                     producer.send(record, callback);
                 }
                 System.out.println("Stock Transactions Batch Sent");
@@ -210,7 +210,7 @@ public class MockDataProducer {
                 List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, numClickEvents);
                 for (StockTransaction transaction : transactions) {
                     String jsonTransaction = convertToJson(transaction);
-                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TOPIC, keyFunction.apply(transaction), jsonTransaction);
+                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TRANSACTIONS_TOPIC, keyFunction.apply(transaction), jsonTransaction);
                     producer.send(record, callback);
                 }
                 System.out.println("Stock Transactions Batch Sent");
