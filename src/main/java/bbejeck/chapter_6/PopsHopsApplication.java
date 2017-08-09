@@ -16,6 +16,7 @@ import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.TopologyBuilder;
+import org.apache.kafka.streams.processor.UsePreviousTimeOnInvalidTimestamp;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 
 import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.*;
@@ -38,21 +39,34 @@ public class PopsHopsApplication {
 
         String domesticSalesSink = "domestic-beer-sales";
         String internationalSalesSink = "international-beer-sales";
-        String purchaseSourceNode = "beer-purchase-source";
+        String purchaseSourceNodeName = "beer-purchase-source";
         String purchaseProcessor = "purchase-processor";
 
 
         BeerPurchaseProcessor beerProcessor = new BeerPurchaseProcessor(domesticSalesSink, internationalSalesSink);
 
-        builder.addSource(purchaseSourceNode, stringDeserializer, beerPurchaseDeserializer, Topics.POPS_HOPS_PURCHASES.topicName())
-                .addProcessor(purchaseProcessor, () -> beerProcessor, purchaseSourceNode);
+        builder.addSource(LATEST,
+                          purchaseSourceNodeName,
+                          new UsePreviousTimeOnInvalidTimestamp(),
+                          stringDeserializer,
+                          beerPurchaseDeserializer,
+                          Topics.POPS_HOPS_PURCHASES.topicName())
+                .addProcessor(purchaseProcessor,
+                              () -> beerProcessor,
+                              purchaseSourceNodeName);
+
                 //Uncomment these two lines and comment out the printer lines for writing to topics
                 //.addSink(internationalSalesSink,"international-sales", stringSerializer, beerPurchaseSerializer, purchaseProcessor)
                // .addSink(domesticSalesSink,"domestic-sales", stringSerializer, beerPurchaseSerializer, purchaseProcessor);
 
         //You'll have to comment these lines out if you want to write to topics as they have the same node names
-        builder.addProcessor(domesticSalesSink,new KStreamPrinter("domestic-sales"),purchaseProcessor );
-        builder.addProcessor(internationalSalesSink,new KStreamPrinter("international-sales"), purchaseProcessor );
+        builder.addProcessor(domesticSalesSink,
+                            new KStreamPrinter("domestic-sales"),
+                            purchaseProcessor );
+
+        builder.addProcessor(internationalSalesSink,
+                             new KStreamPrinter("international-sales"),
+                             purchaseProcessor );
 
         KafkaStreams kafkaStreams = new KafkaStreams(builder, streamsConfig);
         MockDataProducer.produceBeerPurchases(5);
