@@ -1,7 +1,7 @@
 package bbejeck.util.serde;
 
 import bbejeck.collectors.FixedSizePriorityQueue;
-import bbejeck.model.DayTradingAppClickEvent;
+import bbejeck.model.ClickEvent;
 import bbejeck.model.StockPerformance;
 import bbejeck.model.TransactionSummary;
 import bbejeck.model.ShareVolume;
@@ -61,15 +61,15 @@ public class StreamsSerdes {
         return new StockPerformanceSerde();
     }
 
-    public static Serde<Tuple<List<DayTradingAppClickEvent>, List<StockTransaction>>> EventTransactionTupleSerde() {
+    public static Serde<Tuple<List<ClickEvent>, List<StockTransaction>>> EventTransactionTupleSerde() {
         return new EventTransactionTupleSerde();
     }
 
-    public static Serde<DayTradingAppClickEvent> ClickEventSerde() {
+    public static Serde<ClickEvent> ClickEventSerde() {
         return new ClickEventSerde();
     }
 
-    public static Serde<List<DayTradingAppClickEvent>> EventListSerde() {
+    public static Serde<List<ClickEvent>> EventListSerde() {
         return new EventsListSerde();
     }
 
@@ -131,16 +131,16 @@ public class StreamsSerdes {
         }
     }
 
-    public static final class EventTransactionTupleSerde extends WrapperSerde<Tuple<List<DayTradingAppClickEvent>, List<StockTransaction>>> {
-            private static final Type tupleType = new TypeToken<Tuple<List<DayTradingAppClickEvent>, List<StockTransaction>>>(){}.getType();
+    public static final class EventTransactionTupleSerde extends WrapperSerde<Tuple<List<ClickEvent>, List<StockTransaction>>> {
+            private static final Type tupleType = new TypeToken<Tuple<List<ClickEvent>, List<StockTransaction>>>(){}.getType();
         public EventTransactionTupleSerde() {
             super(new JsonSerializer<>(), new JsonDeserializer<>(tupleType));
         }
     }
 
-    public static final class ClickEventSerde extends WrapperSerde<DayTradingAppClickEvent> {
+    public static final class ClickEventSerde extends WrapperSerde<ClickEvent> {
         public ClickEventSerde () {
-            super(new JsonSerializer<>(), new JsonDeserializer<>(DayTradingAppClickEvent.class));
+            super(new JsonSerializer<>(), new JsonDeserializer<>(ClickEvent.class));
         }
     }
 
@@ -151,8 +151,8 @@ public class StreamsSerdes {
         }
     }
 
-    public static final class EventsListSerde extends  WrapperSerde<List<DayTradingAppClickEvent>>  {
-        private static final Type listType = new TypeToken<List<DayTradingAppClickEvent>>(){}.getType();
+    public static final class EventsListSerde extends  WrapperSerde<List<ClickEvent>>  {
+        private static final Type listType = new TypeToken<List<ClickEvent>>(){}.getType();
         public EventsListSerde() {
             super(new JsonSerializer<>(), new JsonDeserializer<>(listType));
         }

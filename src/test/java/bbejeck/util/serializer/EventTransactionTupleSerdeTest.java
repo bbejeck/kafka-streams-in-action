@@ -1,7 +1,7 @@
 package bbejeck.util.serializer;
 
 
-import bbejeck.model.DayTradingAppClickEvent;
+import bbejeck.model.ClickEvent;
 import bbejeck.model.StockTransaction;
 import bbejeck.util.collection.Tuple;
 import bbejeck.util.serde.StreamsSerdes;
@@ -20,10 +20,10 @@ import static org.junit.Assert.assertThat;
 public class EventTransactionTupleSerdeTest {
 
     private StockTransaction transaction;
-    private DayTradingAppClickEvent dayTradingAppClickEvent;
-    private Tuple<List<DayTradingAppClickEvent>, List<StockTransaction>> eventTuple;
+    private ClickEvent clickEvent;
+    private Tuple<List<ClickEvent>, List<StockTransaction>> eventTuple;
 
-    private Serde<Tuple<List<DayTradingAppClickEvent>, List<StockTransaction>>> tupleSerde = StreamsSerdes.EventTransactionTupleSerde();
+    private Serde<Tuple<List<ClickEvent>, List<StockTransaction>>> tupleSerde = StreamsSerdes.EventTransactionTupleSerde();
 
     @Before
     public void setUp() {
@@ -37,11 +37,11 @@ public class EventTransactionTupleSerdeTest {
                 .withShares(500)
                 .withSymbol("XYZ").build();
 
-        dayTradingAppClickEvent = new DayTradingAppClickEvent("XYZ", "http://link", Instant.now());
-        List<DayTradingAppClickEvent> eventList = new ArrayList<>();
+        clickEvent = new ClickEvent("XYZ", "http://link", Instant.now());
+        List<ClickEvent> eventList = new ArrayList<>();
         List<StockTransaction> transactionList = new ArrayList<>();
 
-        eventList.add(dayTradingAppClickEvent);
+        eventList.add(clickEvent);
         transactionList.add(transaction);
 
         eventTuple = Tuple.of(eventList, transactionList);
@@ -53,14 +53,14 @@ public class EventTransactionTupleSerdeTest {
 
         byte[] bytes = tupleSerde.serializer().serialize("topic", eventTuple);
 
-        Tuple<List<DayTradingAppClickEvent>, List<StockTransaction>> deserializedTuple = tupleSerde.deserializer().deserialize("topic", bytes);
+        Tuple<List<ClickEvent>, List<StockTransaction>> deserializedTuple = tupleSerde.deserializer().deserialize("topic", bytes);
 
-        List<DayTradingAppClickEvent> deserializedEvts = deserializedTuple._1;
+        List<ClickEvent> deserializedEvts = deserializedTuple._1;
         List<StockTransaction> deserializedTxns = deserializedTuple._2;
 
         assertThat(deserializedEvts.size(), is(1));
         assertThat(deserializedTxns.size(), is(1));
-        assertEquals(deserializedEvts.get(0), dayTradingAppClickEvent);
+        assertEquals(deserializedEvts.get(0), clickEvent);
         assertEquals(deserializedTxns.get(0), transaction);
     }
 

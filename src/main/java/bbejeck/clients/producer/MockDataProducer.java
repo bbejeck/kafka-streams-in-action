@@ -1,7 +1,7 @@
 package bbejeck.clients.producer;
 
 import bbejeck.model.BeerPurchase;
-import bbejeck.model.DayTradingAppClickEvent;
+import bbejeck.model.ClickEvent;
 import bbejeck.model.PublicTradedCompany;
 import bbejeck.model.Purchase;
 import bbejeck.model.StockTickerData;
@@ -190,7 +190,7 @@ public class MockDataProducer {
 
     public static void produceStockTransactionsAndDayTradingClickEvents(int numberIterations, int numberTradedCompanies, int numClickEvents, Function<StockTransaction, String> keyFunction) {
         List<PublicTradedCompany> companies = DataGenerator.generatePublicTradedCompanies(numberTradedCompanies);
-        List<DayTradingAppClickEvent> clickEvents = DataGenerator.generateDayTradingClickEvents(numClickEvents, companies);
+        List<ClickEvent> clickEvents = DataGenerator.generateDayTradingClickEvents(numClickEvents, companies);
         List<DataGenerator.Customer> customers = DataGenerator.generateCustomers(NUMBER_UNIQUE_CUSTOMERS);
 
         Runnable produceStockTransactionsTask = () -> {
@@ -200,7 +200,7 @@ public class MockDataProducer {
             int counter = 0;
             while (counter++ < numberIterations) {
 
-                for (DayTradingAppClickEvent clickEvent : clickEvents) {
+                for (ClickEvent clickEvent : clickEvents) {
                     String jsonEvent = convertToJson(clickEvent);
                     ProducerRecord<String, String> record = new ProducerRecord<>(CLICK_EVNTS_SRC, clickEvent.getSymbol(), jsonEvent);
                     producer.send(record, callback);

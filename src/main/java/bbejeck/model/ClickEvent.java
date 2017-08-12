@@ -3,13 +3,13 @@ package bbejeck.model;
 import java.time.Instant;
 
 
-public class DayTradingAppClickEvent {
+public class ClickEvent {
 
     private String symbol;
     private String link;
     private Instant timestamp;
 
-    public DayTradingAppClickEvent(String symbol, String link, Instant timestamp) {
+    public ClickEvent(String symbol, String link, Instant timestamp) {
         this.symbol = symbol;
         this.link = link;
         this.timestamp = timestamp;
@@ -29,7 +29,7 @@ public class DayTradingAppClickEvent {
 
     @Override
     public String toString() {
-        return "DayTradingAppClickEvent{" +
+        return "ClickEvent{" +
                 "symbol='" + symbol + '\'' +
                 ", link='" + link + '\'' +
                 ", timestamp=" + timestamp +
@@ -39,9 +39,9 @@ public class DayTradingAppClickEvent {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof DayTradingAppClickEvent)) return false;
+        if (!(o instanceof ClickEvent)) return false;
 
-        DayTradingAppClickEvent that = (DayTradingAppClickEvent) o;
+        ClickEvent that = (ClickEvent) o;
 
         if (symbol != null ? !symbol.equals(that.symbol) : that.symbol != null) return false;
         if (link != null ? !link.equals(that.link) : that.link != null) return false;

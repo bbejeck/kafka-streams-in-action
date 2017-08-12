@@ -2,10 +2,11 @@ package bbejeck.chapter_6;
 
 
 import bbejeck.chapter_6.processor.ClickEventCogroupingProcessor;
+import bbejeck.chapter_6.processor.CoGroupingAggregatingProcessor;
 import bbejeck.chapter_6.processor.KStreamPrinter;
 import bbejeck.chapter_6.processor.StockTransactionCogroupingProcessor;
 import bbejeck.clients.producer.MockDataProducer;
-import bbejeck.model.DayTradingAppClickEvent;
+import bbejeck.model.ClickEvent;
 import bbejeck.model.StockTransaction;
 import bbejeck.util.collection.Tuple;
 import bbejeck.util.serde.StreamsSerdes;
@@ -23,8 +24,6 @@ import org.apache.kafka.streams.state.Stores;
 import java.util.List;
 import java.util.Properties;
 
-import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.LATEST;
-
 public class CoGroupingApplication {
 
     public static void main(String[] args) throws Exception {
@@ -34,35 +33,31 @@ public class CoGroupingApplication {
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
         Deserializer<String> stringDeserializer = Serdes.String().deserializer();
         Serializer<String> stringSerializer = Serdes.String().serializer();
-        Serde<Tuple<List<DayTradingAppClickEvent>, List<StockTransaction>>> eventPerformanceTuple = StreamsSerdes.EventTransactionTupleSerde();
-        Serializer<Tuple<List<DayTradingAppClickEvent>, List<StockTransaction>>> tupleSerializer = eventPerformanceTuple.serializer();
+        Serde<Tuple<List<ClickEvent>, List<StockTransaction>>> eventPerformanceTuple = StreamsSerdes.EventTransactionTupleSerde();
+        Serializer<Tuple<List<ClickEvent>, List<StockTransaction>>> tupleSerializer = eventPerformanceTuple.serializer();
         Serde<StockTransaction> stockTransactionSerde = StreamsSerdes.StockTransactionSerde();
         Deserializer<StockTransaction> stockTransactionDeserializer = stockTransactionSerde.deserializer();
 
-        Serde<DayTradingAppClickEvent> clickEventSerde = StreamsSerdes.ClickEventSerde();
-        Deserializer<DayTradingAppClickEvent> clickEventDeserializer = clickEventSerde.deserializer();
+        Serde<ClickEvent> clickEventSerde = StreamsSerdes.ClickEventSerde();
+        Deserializer<ClickEvent> clickEventDeserializer = clickEventSerde.deserializer();
         Serde<List<StockTransaction>> txnListSerde = StreamsSerdes.TransactionsListSerde();
-        Serde<List<DayTradingAppClickEvent>> eventListSerde = StreamsSerdes.EventListSerde();
+        Serde<List<ClickEvent>> eventListSerde = StreamsSerdes.EventListSerde();
 
 
         TopologyBuilder builder = new TopologyBuilder();
-        String stocksStateStore = "stock-transactions-store";
-        String dayTradingEventClicksStore = "day-trading-clicks-store";
 
-        StockTransactionCogroupingProcessor transactionProcessor = new StockTransactionCogroupingProcessor(stocksStateStore);
-        ClickEventCogroupingProcessor eventProcessor = new ClickEventCogroupingProcessor(stocksStateStore, dayTradingEventClicksStore);
 
         builder.addSource("txn-source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
                 .addSource( "events-source", stringDeserializer, clickEventDeserializer, "events")
-                .addProcessor("txn-processor", () -> transactionProcessor, "txn-source")
-                .addProcessor("evnts-processor", () -> eventProcessor, "events-source")
-                .addStateStore(Stores.create(stocksStateStore).withStringKeys()
-                        .withValues(txnListSerde).inMemory().maxEntries(100).build(),  "txn-processor", "evnts-processor")
-                .addStateStore(Stores.create(dayTradingEventClicksStore).withStringKeys()
-                        .withValues(eventListSerde).inMemory().maxEntries(100).build(),  "evnts-processor")
-                .addSink("tuple-sink", "cogrouped-results", stringSerializer, tupleSerializer, "evnts-processor");
+                .addProcessor("txn-processor", StockTransactionCogroupingProcessor::new, "txn-source")
+                .addProcessor("evnts-processor", ClickEventCogroupingProcessor::new, "events-source")
+                .addProcessor("co-grouper", CoGroupingAggregatingProcessor::new, "txn-processor", "evnts-processor")
+                .addStateStore(Stores.create(CoGroupingAggregatingProcessor.TUPLE_STORE_NAME)
+                                     .withKeys(Serdes.String())
+                                     .withValues(eventPerformanceTuple).persistent().build(), "co-grouper")
+                .addSink("tuple-sink", "cogrouped-results", stringSerializer, tupleSerializer, "co-grouper");
 
-        builder.addProcessor("print", new KStreamPrinter("Co-Grouping"), "evnts-processor");
+        builder.addProcessor("print", new KStreamPrinter("Co-Grouping"), "co-grouper");
 
 
         MockDataProducer.produceStockTransactionsAndDayTradingClickEvents(50, 100, 100, StockTransaction::getSymbol);
