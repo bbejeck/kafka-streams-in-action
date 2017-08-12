@@ -40,8 +40,6 @@ public class CoGroupingApplication {
 
         Serde<ClickEvent> clickEventSerde = StreamsSerdes.ClickEventSerde();
         Deserializer<ClickEvent> clickEventDeserializer = clickEventSerde.deserializer();
-        Serde<List<StockTransaction>> txnListSerde = StreamsSerdes.TransactionsListSerde();
-        Serde<List<ClickEvent>> eventListSerde = StreamsSerdes.EventListSerde();
 
 
         TopologyBuilder builder = new TopologyBuilder();
