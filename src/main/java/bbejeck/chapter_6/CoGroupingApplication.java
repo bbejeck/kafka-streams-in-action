@@ -1,10 +1,10 @@
 package bbejeck.chapter_6;
 
 
-import bbejeck.chapter_6.processor.ClickEventCogroupingProcessor;
-import bbejeck.chapter_6.processor.CoGroupingAggregatingProcessor;
+import bbejeck.chapter_6.processor.cogrouping.ClickEventProcessor;
+import bbejeck.chapter_6.processor.cogrouping.AggregatingProcessor;
 import bbejeck.chapter_6.processor.KStreamPrinter;
-import bbejeck.chapter_6.processor.StockTransactionCogroupingProcessor;
+import bbejeck.chapter_6.processor.cogrouping.StockTransactionProcessor;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.ClickEvent;
 import bbejeck.model.StockTransaction;
@@ -47,10 +47,10 @@ public class CoGroupingApplication {
 
         builder.addSource("txn-source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
                 .addSource( "events-source", stringDeserializer, clickEventDeserializer, "events")
-                .addProcessor("txn-processor", StockTransactionCogroupingProcessor::new, "txn-source")
-                .addProcessor("evnts-processor", ClickEventCogroupingProcessor::new, "events-source")
-                .addProcessor("co-grouper", CoGroupingAggregatingProcessor::new, "txn-processor", "evnts-processor")
-                .addStateStore(Stores.create(CoGroupingAggregatingProcessor.TUPLE_STORE_NAME)
+                .addProcessor("txn-processor", StockTransactionProcessor::new, "txn-source")
+                .addProcessor("evnts-processor", ClickEventProcessor::new, "events-source")
+                .addProcessor("co-grouper", AggregatingProcessor::new, "txn-processor", "evnts-processor")
+                .addStateStore(Stores.create(AggregatingProcessor.TUPLE_STORE_NAME)
                                      .withKeys(Serdes.String())
                                      .withValues(eventPerformanceTuple).persistent().build(), "co-grouper")
                 .addSink("tuple-sink", "cogrouped-results", stringSerializer, tupleSerializer, "co-grouper");

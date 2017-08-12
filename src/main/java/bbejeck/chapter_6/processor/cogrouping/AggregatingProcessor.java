@@ -1,4 +1,4 @@
-package bbejeck.chapter_6.processor;
+package bbejeck.chapter_6.processor.cogrouping;
 
 
 import bbejeck.model.ClickEvent;
@@ -18,7 +18,7 @@ import java.util.List;
  * Date: 8/12/17
  * Time: 10:54 AM
  */
-public class CoGroupingAggregatingProcessor extends AbstractProcessor<String, Tuple<ClickEvent,StockTransaction>> {
+public class AggregatingProcessor extends AbstractProcessor<String, Tuple<ClickEvent,StockTransaction>> {
 
     private KeyValueStore<String, Tuple<List<ClickEvent>,List<StockTransaction>>> tupleStore;
     public static final  String TUPLE_STORE_NAME = "tupleCoGroupStore";
