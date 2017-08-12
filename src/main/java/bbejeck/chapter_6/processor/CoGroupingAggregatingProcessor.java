@@ -60,7 +60,10 @@ public class CoGroupingAggregatingProcessor extends AbstractProcessor<String, Tu
             KeyValue<String, Tuple<List<ClickEvent>, List<StockTransaction>>> cogrouping = iterator.next();
 
             if(cogrouping.value != null) {
-                context().forward(cogrouping.key, cogrouping.value);
+                Tuple<List<ClickEvent>, List<StockTransaction>> tupleCopy =
+                        Tuple.of(cogrouping.value._1, cogrouping.value._2);
+                
+                context().forward(cogrouping.key, tupleCopy);
                 cogrouping.value._1.clear();
                 cogrouping.value._2.clear();
                 tupleStore.put(cogrouping.key, cogrouping.value);
