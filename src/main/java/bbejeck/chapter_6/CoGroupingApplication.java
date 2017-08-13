@@ -17,6 +17,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.processor.TopologyBuilder;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.Stores;
@@ -42,10 +43,10 @@ public class CoGroupingApplication {
         Deserializer<ClickEvent> clickEventDeserializer = clickEventSerde.deserializer();
 
 
-        TopologyBuilder builder = new TopologyBuilder();
+        Topology topology = new Topology();
 
 
-        builder.addSource("Txn-Source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
+        topology.addSource("Txn-Source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
                 .addSource( "Events-Source", stringDeserializer, clickEventDeserializer, "events")
                 .addProcessor("Txn-Processor", StockTransactionProcessor::new, "Txn-Source")
                 .addProcessor("Events-Processor", ClickEventProcessor::new, "Events-Source")
@@ -55,12 +56,12 @@ public class CoGroupingApplication {
                                      .withValues(eventPerformanceTuple).persistent().build(), "CoGrouping-Processor")
                 .addSink("Tuple-Sink", "cogrouped-results", stringSerializer, tupleSerializer, "CoGrouping-Processor");
 
-        builder.addProcessor("Print", new KStreamPrinter("Co-Grouping"), "CoGrouping-Processor");
+        topology.addProcessor("Print", new KStreamPrinter("Co-Grouping"), "CoGrouping-Processor");
 
 
         MockDataProducer.produceStockTransactionsAndDayTradingClickEvents(50, 100, 100, StockTransaction::getSymbol);
 
-        KafkaStreams kafkaStreams = new KafkaStreams(builder, streamsConfig);
+        KafkaStreams kafkaStreams = new KafkaStreams(topology, streamsConfig);
         System.out.println("Co-Grouping App Started");
         kafkaStreams.cleanUp();
         kafkaStreams.start();
