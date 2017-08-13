@@ -45,17 +45,17 @@ public class CoGroupingApplication {
         TopologyBuilder builder = new TopologyBuilder();
 
 
-        builder.addSource("txn-source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
-                .addSource( "events-source", stringDeserializer, clickEventDeserializer, "events")
-                .addProcessor("txn-processor", StockTransactionProcessor::new, "txn-source")
-                .addProcessor("evnts-processor", ClickEventProcessor::new, "events-source")
-                .addProcessor("co-grouper", AggregatingProcessor::new, "txn-processor", "evnts-processor")
+        builder.addSource("Txn-Source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
+                .addSource( "Events-Source", stringDeserializer, clickEventDeserializer, "events")
+                .addProcessor("Txn-Processor", StockTransactionProcessor::new, "Txn-Source")
+                .addProcessor("Events-Processor", ClickEventProcessor::new, "Events-Source")
+                .addProcessor("CoGrouping-Processor", AggregatingProcessor::new, "Txn-Processor", "Events-Processor")
                 .addStateStore(Stores.create(AggregatingProcessor.TUPLE_STORE_NAME)
                                      .withKeys(Serdes.String())
-                                     .withValues(eventPerformanceTuple).persistent().build(), "co-grouper")
-                .addSink("tuple-sink", "cogrouped-results", stringSerializer, tupleSerializer, "co-grouper");
+                                     .withValues(eventPerformanceTuple).persistent().build(), "CoGrouping-Processor")
+                .addSink("Tuple-Sink", "cogrouped-results", stringSerializer, tupleSerializer, "CoGrouping-Processor");
 
-        builder.addProcessor("print", new KStreamPrinter("Co-Grouping"), "co-grouper");
+        builder.addProcessor("Print", new KStreamPrinter("Co-Grouping"), "CoGrouping-Processor");
 
 
         MockDataProducer.produceStockTransactionsAndDayTradingClickEvents(50, 100, 100, StockTransaction::getSymbol);
