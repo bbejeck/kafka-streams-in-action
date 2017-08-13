@@ -10,11 +10,12 @@ import org.apache.kafka.streams.processor.Punctuator;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AggregationPunctuator implements Punctuator {
 
-    private final KeyValueStore<String, Tuple<List<ClickEvent>,List<StockTransaction>>> tupleStore;
+    private final KeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>> tupleStore;
     private final ProcessorContext context;
 
     public AggregationPunctuator(KeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>> tupleStore, ProcessorContext context) {
@@ -29,11 +30,11 @@ public class AggregationPunctuator implements Punctuator {
         while (iterator.hasNext()) {
             KeyValue<String, Tuple<List<ClickEvent>, List<StockTransaction>>> cogrouping = iterator.next();
 
-            if(cogrouping.value != null) {
-                Tuple<List<ClickEvent>, List<StockTransaction>> tupleCopy =
-                        Tuple.of(cogrouping.value._1, cogrouping.value._2);
+            if (cogrouping.value != null && (!cogrouping.value._1.isEmpty() || !cogrouping.value._2.isEmpty())) {
+                List<ClickEvent> clickEvents = new ArrayList<>(cogrouping.value._1);
+                List<StockTransaction> stockTransactions = new ArrayList<>(cogrouping.value._2);
 
-                context.forward(cogrouping.key, tupleCopy);
+                context.forward(cogrouping.key, Tuple.of(clickEvents, stockTransactions));
                 cogrouping.value._1.clear();
                 cogrouping.value._2.clear();
                 tupleStore.put(cogrouping.key, cogrouping.value);
