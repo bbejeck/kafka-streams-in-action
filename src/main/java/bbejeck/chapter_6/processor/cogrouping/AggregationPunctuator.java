@@ -24,7 +24,7 @@ public class AggregationPunctuator implements Punctuator {
     }
 
     @Override
-    public void punctuate(long l) {
+    public void punctuate(long timestamp) {
         KeyValueIterator<String, Tuple<List<ClickEvent>, List<StockTransaction>>> iterator = tupleStore.all();
 
         while (iterator.hasNext()) {
@@ -40,6 +40,5 @@ public class AggregationPunctuator implements Punctuator {
                 tupleStore.put(cogrouping.key, cogrouping.value);
             }
         }
-
     }
 }
