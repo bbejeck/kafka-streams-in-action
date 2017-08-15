@@ -1,19 +1,21 @@
 package bbejeck.chapter_6.processor;
 
 
+import bbejeck.chapter_6.processor.punctuator.StockPerformancePunctuator;
 import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTransaction;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.processor.AbstractProcessor;
 import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.time.Instant;
 
-public class StockPerformanceProcessor implements Processor<String, StockTransaction> {
+public class StockPerformanceProcessor extends AbstractProcessor<String, StockTransaction> {
 
-    private ProcessorContext processorContext;
     private KeyValueStore<String, StockPerformance> keyValueStore;
     private String stateStoreName;
     private double differentialThreshold;
@@ -26,9 +28,12 @@ public class StockPerformanceProcessor implements Processor<String, StockTransac
     @SuppressWarnings("unchecked")
     @Override
     public void init(ProcessorContext processorContext) {
-        this.processorContext = processorContext;
-        keyValueStore = (KeyValueStore) this.processorContext.getStateStore(stateStoreName);
-        this.processorContext.schedule(15000);
+        super.init(processorContext);
+        keyValueStore = (KeyValueStore) context().getStateStore(stateStoreName);
+        StockPerformancePunctuator punctuator = new StockPerformancePunctuator(differentialThreshold,
+                                                                               context(),
+                                                                               keyValueStore);
+        context().schedule(10000, PunctuationType.SYSTEM_TIME, punctuator);
     }
 
     @Override
@@ -46,28 +51,5 @@ public class StockPerformanceProcessor implements Processor<String, StockTransac
 
             keyValueStore.put(symbol, stockPerformance);
         }
-    }
-
-    @Override
-    public void punctuate(long timestamp) {
-        KeyValueIterator<String, StockPerformance> performanceIterator = keyValueStore.all();
-
-        while (performanceIterator.hasNext()) {
-            KeyValue<String, StockPerformance> keyValue = performanceIterator.next();
-            String key = keyValue.key;
-            StockPerformance stockPerformance = keyValue.value;
-
-            if (stockPerformance != null) {
-                if (stockPerformance.priceDifferential() >= differentialThreshold ||
-                        stockPerformance.volumeDifferential() >= differentialThreshold) {
-                    this.processorContext.forward(key, stockPerformance);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void close() {
-
     }
 }

@@ -10,6 +10,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
@@ -31,7 +32,7 @@ public class StockPerformanceStreamsAndProcessorMultipleValuesApplication {
         Serde<StockTransaction> stockTransactionSerde = StreamsSerdes.StockTransactionSerde();
 
 
-        KStreamBuilder builder = new KStreamBuilder();
+        StreamsBuilder builder = new StreamsBuilder();
 
         String stocksStateStore = "stock-performance-store";
         double differentialThreshold = 0.05;
@@ -41,13 +42,13 @@ public class StockPerformanceStreamsAndProcessorMultipleValuesApplication {
         builder.addStateStore(Stores.create(stocksStateStore).withStringKeys()
                 .withValues(stockPerformanceSerde).inMemory().maxEntries(100).build());
 
-        builder.stream(LATEST, stringSerde, stockTransactionSerde, "stock-transactions")
+        builder.stream(stringSerde, stockTransactionSerde, "stock-transactions")
                 .transform(performanceTransformer, stocksStateStore).flatMap((dummyKey,valueList) -> valueList)
                 .print(stringSerde, stockPerformanceSerde, "StockPerformance");
                 //.to(stringSerde, stockPerformanceSerde, "stock-performance");
 
 
-        KafkaStreams kafkaStreams = new KafkaStreams(builder, streamsConfig);
+        KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfig);
         MockDataProducer.produceStockTransactionsWithKeyFunction(50, 50, 25, StockTransaction::getSymbol);
         System.out.println("Stock Analysis KStream/Process API App Started");
         kafkaStreams.cleanUp();
