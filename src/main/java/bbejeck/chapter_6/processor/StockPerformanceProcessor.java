@@ -1,15 +1,12 @@
 package bbejeck.chapter_6.processor;
 
 
-import bbejeck.chapter_6.processor.punctuator.StockPerformancePunctuator;
+import bbejeck.chapter_6.punctuator.StockPerformancePunctuator;
 import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTransaction;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.processor.AbstractProcessor;
-import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.PunctuationType;
-import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.time.Instant;
@@ -33,7 +30,8 @@ public class StockPerformanceProcessor extends AbstractProcessor<String, StockTr
         StockPerformancePunctuator punctuator = new StockPerformancePunctuator(differentialThreshold,
                                                                                context(),
                                                                                keyValueStore);
-        context().schedule(10000, PunctuationType.SYSTEM_TIME, punctuator);
+        
+      context().schedule(10000, PunctuationType.SYSTEM_TIME, punctuator);
     }
 
     @Override

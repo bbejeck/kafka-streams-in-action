@@ -1,7 +1,7 @@
 package bbejeck.chapter_6;
 
 
-import bbejeck.chapter_6.transformer.StockPerformanceMultipleValuesTransformerSupplier;
+import bbejeck.chapter_6.transformer.StockPerformanceMultipleValuesTransformer;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTransaction;
@@ -10,15 +10,15 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.kstream.TransformerSupplier;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.Stores;
 
+import java.util.List;
 import java.util.Properties;
-
-import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.LATEST;
 
 public class StockPerformanceStreamsAndProcessorMultipleValuesApplication {
 
@@ -37,13 +37,14 @@ public class StockPerformanceStreamsAndProcessorMultipleValuesApplication {
         String stocksStateStore = "stock-performance-store";
         double differentialThreshold = 0.05;
 
-        StockPerformanceMultipleValuesTransformerSupplier performanceTransformer = new StockPerformanceMultipleValuesTransformerSupplier(stocksStateStore, differentialThreshold);
+        TransformerSupplier<String, StockTransaction, KeyValue<String, List<KeyValue<String, StockPerformance>>>> transformerSupplier =
+                () -> new StockPerformanceMultipleValuesTransformer(stocksStateStore, differentialThreshold);
 
         builder.addStateStore(Stores.create(stocksStateStore).withStringKeys()
                 .withValues(stockPerformanceSerde).inMemory().maxEntries(100).build());
 
         builder.stream(stringSerde, stockTransactionSerde, "stock-transactions")
-                .transform(performanceTransformer, stocksStateStore).flatMap((dummyKey,valueList) -> valueList)
+                .transform(transformerSupplier, stocksStateStore).flatMap((dummyKey,valueList) -> valueList)
                 .print(stringSerde, stockPerformanceSerde, "StockPerformance");
                 //.to(stringSerde, stockPerformanceSerde, "stock-performance");
 

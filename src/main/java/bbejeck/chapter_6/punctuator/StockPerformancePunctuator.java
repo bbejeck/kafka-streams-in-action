@@ -1,4 +1,4 @@
-package bbejeck.chapter_6.processor.punctuator;
+package bbejeck.chapter_6.punctuator;
 
 import bbejeck.model.StockPerformance;
 import org.apache.kafka.streams.KeyValue;

@@ -14,6 +14,8 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.processor.ProcessorSupplier;
 import org.apache.kafka.streams.processor.TopologyBuilder;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.Stores;
@@ -37,22 +39,24 @@ public class StockPerformanceApplication {
         Deserializer<StockTransaction> stockTransactionDeserializer = stockTransactionSerde.deserializer();
 
 
-        TopologyBuilder builder = new TopologyBuilder();
+        Topology topology = new Topology();
         String stocksStateStore = "stock-performance-store";
-        double differentialThreshold = 0.05;
+        double differentialThreshold = 0.02;
 
-        StockPerformanceProcessor stockPerformanceProcessor = new StockPerformanceProcessor(stocksStateStore, differentialThreshold);
-
-        builder.addSource("stocks-source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
-                .addProcessor("stocks-processor", () -> stockPerformanceProcessor, "stocks-source")
-                .addStateStore(Stores.create(stocksStateStore).withStringKeys()
-                        .withValues(stockPerformanceSerde).inMemory().maxEntries(100).build(),"stocks-processor")
+        topology.addSource("stocks-source", stringDeserializer, stockTransactionDeserializer,"stock-transactions")
+                .addProcessor("stocks-processor", () -> new StockPerformanceProcessor(stocksStateStore, differentialThreshold), "stocks-source")
+                .addStateStore(Stores.create(stocksStateStore)
+                                     .withStringKeys()
+                                     .withValues(stockPerformanceSerde)
+                                     .inMemory()
+                                     .maxEntries(100)
+                                     .build(),"stocks-processor")
                 .addSink("stocks-sink", "stock-performance", stringSerializer, stockPerformanceSerializer, "stocks-processor");
 
 
-        builder.addProcessor("stocks-printer", new KStreamPrinter("StockPerformance"), "stocks-processor");
+        topology.addProcessor("stocks-printer", new KStreamPrinter("StockPerformance"), "stocks-processor");
 
-        KafkaStreams kafkaStreams = new KafkaStreams(builder, streamsConfig);
+        KafkaStreams kafkaStreams = new KafkaStreams(topology, streamsConfig);
         MockDataProducer.produceStockTransactionsWithKeyFunction(50,50, 25, StockTransaction::getSymbol);
         System.out.println("Stock Analysis App Started");
         kafkaStreams.cleanUp();
