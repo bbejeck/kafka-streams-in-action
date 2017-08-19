@@ -1,7 +1,7 @@
 package bbejeck.chapter_7;
 
 
-import bbejeck.chapter_6.transformer.StockPerformanceTransformerSupplier;
+import bbejeck.chapter_6.transformer.StockPerformanceTransformer;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTransaction;
@@ -39,13 +39,11 @@ public class StockPerformanceStreamsAndProcessorApplication {
         String stocksStateStore = "stock-performance-store";
         double differentialThreshold = 0.05;
 
-        StockPerformanceTransformerSupplier performanceTransformer = new StockPerformanceTransformerSupplier(stocksStateStore, differentialThreshold);
-
         builder.addStateStore(Stores.create(stocksStateStore).withStringKeys()
                 .withValues(stockPerformanceSerde).inMemory().maxEntries(100).build());
 
         builder.stream(LATEST, stringSerde, stockTransactionSerde, "stock-transactions")
-                .transform(performanceTransformer, stocksStateStore)
+                .transform(()-> new StockPerformanceTransformer(stocksStateStore, differentialThreshold), stocksStateStore)
                 //.print(stringSerde, stockPerformanceSerde, "StockPerformance")
                 //Uncomment this line and comment out the line above for writing to a topic
                 .to(stringSerde, stockPerformanceSerde, "stock-performance");
