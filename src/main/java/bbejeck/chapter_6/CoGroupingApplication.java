@@ -48,7 +48,7 @@ public class CoGroupingApplication {
         Topology topology = new Topology();
         Map<String, String> changeLogConfigs = new HashMap<>();
         changeLogConfigs.put("retention.ms","120000" );
-        changeLogConfigs.put("cleanup.policy", "compact,delete");
+        changeLogConfigs.put("cleanup.policy", "compact");
 
 
         topology.addSource("Txn-Source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")

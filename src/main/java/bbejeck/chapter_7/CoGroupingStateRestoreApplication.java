@@ -22,7 +22,9 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.Stores;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class CoGroupingStateRestoreApplication {
@@ -44,6 +46,9 @@ public class CoGroupingStateRestoreApplication {
 
 
         Topology topology = new Topology();
+        Map<String, String> changeLogConfigs = new HashMap<>();
+        changeLogConfigs.put("retention.ms","120000" );
+        changeLogConfigs.put("cleanup.policy", "compact");
 
 
         topology.addSource("Txn-Source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
@@ -53,7 +58,9 @@ public class CoGroupingStateRestoreApplication {
                 .addProcessor("CoGrouping-Processor", AggregatingProcessor::new, "Txn-Processor", "Events-Processor")
                 .addStateStore(Stores.create(AggregatingProcessor.TUPLE_STORE_NAME)
                                      .withKeys(Serdes.String())
-                                     .withValues(eventPerformanceTuple).persistent().build(), "CoGrouping-Processor")
+                                     .withValues(eventPerformanceTuple)
+                                     .persistent().enableLogging(changeLogConfigs)
+                                     .build(), "CoGrouping-Processor")
                 .addSink("Tuple-Sink", "cogrouped-results", stringSerializer, tupleSerializer, "CoGrouping-Processor");
 
         topology.addProcessor("Print", new KStreamPrinter("Co-Grouping"), "CoGrouping-Processor");
@@ -79,9 +86,9 @@ public class CoGroupingStateRestoreApplication {
 
     private static Properties getProperties() {
         Properties props = new Properties();
-        props.put(StreamsConfig.CLIENT_ID_CONFIG, "cogrouping-client");
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "cogrouping-group");
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "cogrouping-appid");
+        props.put(StreamsConfig.CLIENT_ID_CONFIG, "cogrouping-restoring-client");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "cogrouping-restoring-group");
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "cogrouping-restoring-appid");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"latest");
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
