@@ -12,6 +12,7 @@ import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
@@ -34,7 +35,7 @@ public class StockPerformanceStreamsAndProcessorApplication {
         Serde<StockTransaction> stockTransactionSerde = StreamsSerdes.StockTransactionSerde();
 
 
-        KStreamBuilder builder = new KStreamBuilder();
+        StreamsBuilder builder = new StreamsBuilder();
 
         String stocksStateStore = "stock-performance-store";
         double differentialThreshold = 0.05;
@@ -42,14 +43,14 @@ public class StockPerformanceStreamsAndProcessorApplication {
         builder.addStateStore(Stores.create(stocksStateStore).withStringKeys()
                 .withValues(stockPerformanceSerde).inMemory().maxEntries(100).build());
 
-        builder.stream(LATEST, stringSerde, stockTransactionSerde, "stock-transactions")
+        builder.stream(stringSerde, stockTransactionSerde, "stock-transactions")
                 .transform(()-> new StockPerformanceTransformer(stocksStateStore, differentialThreshold), stocksStateStore)
                 //.print(stringSerde, stockPerformanceSerde, "StockPerformance")
                 //Uncomment this line and comment out the line above for writing to a topic
                 .to(stringSerde, stockPerformanceSerde, "stock-performance");
 
 
-        KafkaStreams kafkaStreams = new KafkaStreams(builder, streamsConfig);
+        KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfig);
         MockDataProducer.produceStockTransactionsWithKeyFunction(50, 50, 25, StockTransaction::getSymbol);
         System.out.println("Stock Analysis KStream/Process API App Started");
         kafkaStreams.cleanUp();
@@ -82,9 +83,10 @@ public class StockPerformanceStreamsAndProcessorApplication {
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "ks-stats-stock-analysis-appid");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
-        props.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
+        props.put(StreamsConfig.METRICS_RECORDING_LEVEL_CONFIG, "DEBUG");
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
         return props;
     }
 }
