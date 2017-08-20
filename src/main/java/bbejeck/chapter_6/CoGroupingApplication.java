@@ -22,7 +22,9 @@ import org.apache.kafka.streams.processor.TopologyBuilder;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.Stores;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class CoGroupingApplication {
@@ -44,6 +46,9 @@ public class CoGroupingApplication {
 
 
         Topology topology = new Topology();
+        Map<String, String> changeLogConfigs = new HashMap<>();
+        changeLogConfigs.put("retention.ms","120000" );
+        changeLogConfigs.put("cleanup.policy", "compact,delete");
 
 
         topology.addSource("Txn-Source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
@@ -53,7 +58,9 @@ public class CoGroupingApplication {
                 .addProcessor("CoGrouping-Processor", AggregatingProcessor::new, "Txn-Processor", "Events-Processor")
                 .addStateStore(Stores.create(AggregatingProcessor.TUPLE_STORE_NAME)
                                      .withKeys(Serdes.String())
-                                     .withValues(eventPerformanceTuple).persistent().build(), "CoGrouping-Processor")
+                                     .withValues(eventPerformanceTuple)
+                                     .persistent().enableLogging(changeLogConfigs)
+                                     .build(), "CoGrouping-Processor")
                 .addSink("Tuple-Sink", "cogrouped-results", stringSerializer, tupleSerializer, "CoGrouping-Processor");
 
         topology.addProcessor("Print", new KStreamPrinter("Co-Grouping"), "CoGrouping-Processor");

@@ -31,13 +31,10 @@ public class AggregationPunctuator implements Punctuator {
             KeyValue<String, Tuple<List<ClickEvent>, List<StockTransaction>>> cogrouping = iterator.next();
 
             if (cogrouping.value != null && (!cogrouping.value._1.isEmpty() || !cogrouping.value._2.isEmpty())) {
-                List<ClickEvent> clickEvents = new ArrayList<>(cogrouping.value._1);
-                List<StockTransaction> stockTransactions = new ArrayList<>(cogrouping.value._2);
 
-                context.forward(cogrouping.key, Tuple.of(clickEvents, stockTransactions));
-                cogrouping.value._1.clear();
-                cogrouping.value._2.clear();
-                tupleStore.put(cogrouping.key, cogrouping.value);
+                context.forward(cogrouping.key, cogrouping.value);
+                // delete semantics for kafka streams stores, null value indicates deletion
+                tupleStore.put(cogrouping.key, null);
             }
         }
     }
