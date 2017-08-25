@@ -14,14 +14,13 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.Stores;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
-
-import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.LATEST;
 
 public class StockPerformanceStreamsAndProcessorApplication {
 
@@ -44,7 +43,7 @@ public class StockPerformanceStreamsAndProcessorApplication {
                 .withValues(stockPerformanceSerde).inMemory().maxEntries(100).build());
 
         builder.stream(stringSerde, stockTransactionSerde, "stock-transactions")
-                .transform(()-> new StockPerformanceTransformer(stocksStateStore, differentialThreshold), stocksStateStore)
+                .transform(() -> new StockPerformanceTransformer(stocksStateStore, differentialThreshold), stocksStateStore)
                 //.print(stringSerde, stockPerformanceSerde, "StockPerformance")
                 //Uncomment this line and comment out the line above for writing to a topic
                 .to(stringSerde, stockPerformanceSerde, "stock-performance");
@@ -87,6 +86,7 @@ public class StockPerformanceStreamsAndProcessorApplication {
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
+        props.put(StreamsConfig.consumerPrefix(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG), Collections.singletonList(bbejeck.chapter_7.interceptors.StockTransactionConsumerInterceptor.class));
         return props;
     }
 }
