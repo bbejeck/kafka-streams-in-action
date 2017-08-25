@@ -71,11 +71,17 @@ public class CoGroupingStateRestoreApplication {
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamsConfig);
         kafkaStreams.setGlobalStateRestoreListener(new LoggingStateRestoreListener());
 
+        kafkaStreams.setUncaughtExceptionHandler((thread, exception) -> {
+            System.out.println("Thread [" + thread + "] encountered [" + exception.getMessage() +"]");
+        });
+
         System.out.println(topology.describe());
         System.out.println("Co-Grouping App Started");
         kafkaStreams.cleanUp();
         kafkaStreams.start();
         Thread.sleep(10000);
+        //TODO do this with state listener
+        //TODO also add topology#describe
         System.out.println(kafkaStreams.toString());
         Thread.sleep(70000);
         System.out.println("Shutting down the Co-Grouping App now");

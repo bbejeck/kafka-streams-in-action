@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
-public class StockPerformanceStreamsAndProcessorApplication {
+public class StockPerformanceStreamsAndProcessorMetricsApplication {
 
 
     public static void main(String[] args) throws Exception {
@@ -44,8 +44,7 @@ public class StockPerformanceStreamsAndProcessorApplication {
 
         builder.stream(stringSerde, stockTransactionSerde, "stock-transactions")
                 .transform(() -> new StockPerformanceTransformer(stocksStateStore, differentialThreshold), stocksStateStore)
-                //.print(stringSerde, stockPerformanceSerde, "StockPerformance")
-                //Uncomment this line and comment out the line above for writing to a topic
+                .peek((k, v)-> System.out.println("[stock-performance] key:"+ k +" value: " +v))
                 .to(stringSerde, stockPerformanceSerde, "stock-performance");
 
 

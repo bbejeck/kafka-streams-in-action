@@ -17,12 +17,14 @@
 package bbejeck.chapter_7;
 
 import bbejeck.chapter_3.service.SecurityDBService;
+import bbejeck.chapter_7.interceptors.ZMartProducerInterceptor;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
 import bbejeck.model.RewardAccumulator;
 import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -36,6 +38,7 @@ import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 
+import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -153,6 +156,7 @@ public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "zmart-metrics-application-id");
         props.put(StreamsConfig.METRICS_RECORDING_LEVEL_CONFIG, "DEBUG");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(StreamsConfig.producerPrefix(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG), Collections.singletonList(ZMartProducerInterceptor.class));
         return props;
     }
 
