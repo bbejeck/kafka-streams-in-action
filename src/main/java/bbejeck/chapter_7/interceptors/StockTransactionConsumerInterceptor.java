@@ -21,7 +21,7 @@ public class StockTransactionConsumerInterceptor implements ConsumerInterceptor<
 
     @Override
     public ConsumerRecords<String, StockTransaction> onConsume(ConsumerRecords<String, StockTransaction> consumerRecords) {
-        System.out.println("Intercepted "+consumerRecords);
+        System.out.println("Intercepted records "+consumerRecords);
         return consumerRecords;
     }
 

@@ -22,6 +22,7 @@ import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
 import bbejeck.model.RewardAccumulator;
+import bbejeck.util.datagen.DataGenerator;
 import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -33,10 +34,8 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.ForeachAction;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
-import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 
 import java.util.Collections;
 import java.util.Properties;
@@ -46,9 +45,6 @@ import java.util.concurrent.CountDownLatch;
 public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
 
     public static void main(String[] args) throws Exception {
-
-        //Used only to produce data for this application, not typical usage
-        MockDataProducer.producePurchaseData();
 
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
 
@@ -123,7 +119,14 @@ public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
 
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamsConfig);
 
+        KafkaStreams.StateListener stateListener = (newState, oldState) -> {
+            if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
+                System.out.println(topology.describe());
+                System.out.println(kafkaStreams.toString());
+            }
+        };
 
+        kafkaStreams.setStateListener(stateListener);
         System.out.println("ZMart Advanced Requirements Metrics Application Started");
         kafkaStreams.cleanUp();
         CountDownLatch stopSignal = new CountDownLatch(1);
@@ -137,10 +140,8 @@ public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
 
 
 
+        MockDataProducer.producePurchaseData(DataGenerator.DEFAULT_NUM_PURCHASES, 250, DataGenerator.NUMBER_UNIQUE_CUSTOMERS);
         kafkaStreams.start();
-        Thread.sleep(10000);
-        System.out.println(topology.describe());
-        System.out.println(kafkaStreams.toString());
 
         stopSignal.await();
         System.out.println("All done now, good-bye");

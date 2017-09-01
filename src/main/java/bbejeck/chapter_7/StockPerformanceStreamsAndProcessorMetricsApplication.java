@@ -1,7 +1,7 @@
 package bbejeck.chapter_7;
 
 
-import bbejeck.chapter_6.transformer.StockPerformanceTransformer;
+import bbejeck.chapter_7.transformer.StockPerformanceMetricsTransformer;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTransaction;
@@ -17,7 +17,6 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.Stores;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
@@ -43,7 +42,7 @@ public class StockPerformanceStreamsAndProcessorMetricsApplication {
                 .withValues(stockPerformanceSerde).inMemory().maxEntries(100).build());
 
         builder.stream(stringSerde, stockTransactionSerde, "stock-transactions")
-                .transform(() -> new StockPerformanceTransformer(stocksStateStore, differentialThreshold), stocksStateStore)
+                .transform(() -> new StockPerformanceMetricsTransformer(stocksStateStore, differentialThreshold), stocksStateStore)
                 .peek((k, v)-> System.out.println("[stock-performance] key:"+ k +" value: " +v))
                 .to(stringSerde, stockPerformanceSerde, "stock-performance");
 
@@ -61,7 +60,7 @@ public class StockPerformanceStreamsAndProcessorMetricsApplication {
 
 
         System.out.println("Shutting down the Stock KStream/Process API Analysis App now");
-        for (Map.Entry<MetricName, ? extends Metric> metricNameEntry : kafkaStreams.metrics().entrySet()) {
+        for (Map.Entry<MetricName, ? extends Metric> metricNameEntry :kafkaStreams.metrics().entrySet()) {
             Metric metric = metricNameEntry.getValue();
             MetricName metricName = metricNameEntry.getKey();
             if(metric.value() != 0.0 && metric.value() != Double.NEGATIVE_INFINITY) {

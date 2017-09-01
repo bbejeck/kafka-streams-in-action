@@ -296,7 +296,7 @@ public class MockDataProducer {
                 try {
                     Thread.sleep(4000);
                 } catch (InterruptedException e) {
-                    Thread.interrupted();
+                     Thread.currentThread().interrupt();
                 }
             }
             //System.out.println("Done generating StockTickerData Data");

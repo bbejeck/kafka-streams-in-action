@@ -27,11 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class CoGroupingStateRestoreApplication {
+public class CoGroupingListeningExampleApplication {
 
     public static void main(String[] args) throws Exception {
-
-
 
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
         Deserializer<String> stringDeserializer = Serdes.String().deserializer();
