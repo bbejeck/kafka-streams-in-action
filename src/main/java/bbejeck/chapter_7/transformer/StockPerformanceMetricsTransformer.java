@@ -35,11 +35,20 @@ public class StockPerformanceMetricsTransformer implements Transformer<String, S
     @Override
     @SuppressWarnings("unchecked")
     public void init(final ProcessorContext processorContext) {
-
         keyValueStore = (KeyValueStore) processorContext.getStateStore(stocksStateStore);
         this.processorContext = processorContext;
+        
         this.processorContext.schedule(5000, PunctuationType.SYSTEM_TIME, this::doPunctuate);
-        metricsSensor = addSensor(this.processorContext);
+
+
+        final String tagKey = "task-id";
+        final String tagValue = processorContext.taskId().toString();
+        final String nodeName = "StockPerformanceProcessor_"+count.getAndIncrement();
+       metricsSensor = processorContext.metrics().addLatencyAndThroughputSensor("transformer-node",
+                nodeName, "stock-performance-calculation",
+                Sensor.RecordingLevel.DEBUG,
+                tagKey,
+                tagValue);
     }
 
     @Override
@@ -56,6 +65,7 @@ public class StockPerformanceMetricsTransformer implements Transformer<String, S
             stockPerformance.updateVolumeStats(stockTransaction.getShares());
             stockPerformance.setLastUpdateSent(Instant.now());
             long end = System.nanoTime();
+            
             processorContext.metrics().recordLatency(metricsSensor, start, end);
 
             keyValueStore.put(symbol, stockPerformance);
@@ -88,16 +98,5 @@ public class StockPerformanceMetricsTransformer implements Transformer<String, S
     @Override
     public void close() {
 
-    }
-
-    private Sensor addSensor(final ProcessorContext context) {
-        final String tagKey = "task-id";
-        final String tagValue = processorContext.taskId().toString();
-        final String nodeName = "StockPerformanceProcessor_"+count.getAndIncrement();
-        return processorContext.metrics().addLatencyAndThroughputSensor("transformer-node",
-                nodeName, "stock-performance-calculation",
-                Sensor.RecordingLevel.DEBUG,
-                tagKey,
-                tagValue);
     }
 }

@@ -19,12 +19,12 @@ public class StockTransactionConsumerInterceptor implements ConsumerInterceptor<
     private static final Logger LOG = LoggerFactory.getLogger(StockTransactionConsumerInterceptor.class);
 
     public StockTransactionConsumerInterceptor() {
-        System.out.println("Built StockTransactionConsumerInterceptor");
+        LOG.info("Built StockTransactionConsumerInterceptor");
     }
 
     @Override
     public ConsumerRecords<String, StockTransaction> onConsume(ConsumerRecords<String, StockTransaction> consumerRecords) {
-        LOG.info("Intercepted records "+consumerRecords);
+        LOG.info("Intercepted records {}", consumerRecords);
         return consumerRecords;
     }
 
