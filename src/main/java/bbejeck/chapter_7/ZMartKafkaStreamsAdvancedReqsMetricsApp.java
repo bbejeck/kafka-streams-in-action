@@ -16,7 +16,6 @@
 
 package bbejeck.chapter_7;
 
-import bbejeck.chapter_3.service.SecurityDBService;
 import bbejeck.chapter_7.interceptors.ZMartProducerInterceptor;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.Purchase;
@@ -36,6 +35,7 @@ import org.apache.kafka.streams.kstream.ForeachAction;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
+import org.apache.log4j.Logger;
 
 import java.util.Collections;
 import java.util.Properties;
@@ -43,6 +43,8 @@ import java.util.concurrent.CountDownLatch;
 
 
 public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
+
+    private static final Logger CONSOLE_LOG = Logger.getLogger(ZMartKafkaStreamsAdvancedReqsMetricsApp.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -64,13 +66,11 @@ public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
 
         KStream<String, PurchasePattern> patternKStream = purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build());
 
-        patternKStream.print(stringSerde, purchasePatternSerde, "patterns");
         patternKStream.to(stringSerde,purchasePatternSerde,"patterns");
 
 
         KStream<String, RewardAccumulator> rewardsKStream = purchaseKStream.mapValues(purchase -> RewardAccumulator.builder(purchase).build());
 
-        rewardsKStream.print(stringSerde,rewardAccumulatorSerde,"rewards");
         rewardsKStream.to(stringSerde,rewardAccumulatorSerde,"rewards");
 
 
@@ -82,7 +82,6 @@ public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
 
         KStream<Long, Purchase> filteredKStream = purchaseKStream.filter((key, purchase) -> purchase.getPrice() > 5.00).selectKey(purchaseDateAsKey);
 
-        filteredKStream.print(Serdes.Long(),purchaseSerde,"purchases");
         filteredKStream.to(Serdes.Long(),purchaseSerde,"purchases");
 
 
@@ -98,18 +97,15 @@ public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
         KStream<String, Purchase>[] kstreamByDept = purchaseKStream.branch(isCoffee, isElectronics);
 
         kstreamByDept[coffee].to(stringSerde, purchaseSerde, "coffee");
-        kstreamByDept[coffee].print(stringSerde, purchaseSerde, "coffee");
 
         kstreamByDept[electronics].to(stringSerde, purchaseSerde, "electronics");
-        kstreamByDept[electronics].print(stringSerde, purchaseSerde, "electronics");
 
 
 
         /**
          * Security Requirements to record transactions for certain employee
          */
-        ForeachAction<String, Purchase> purchaseForeachAction = (key, purchase) ->
-                SecurityDBService.saveRecord(purchase.getPurchaseDate(), purchase.getEmployeeId(), purchase.getItemPurchased());
+        ForeachAction<String, Purchase> purchaseForeachAction = (key, purchase) -> { };
 
         
         purchaseKStream.filter((key, purchase) -> purchase.getEmployeeId().equals("000000")).foreach(purchaseForeachAction);
@@ -121,18 +117,22 @@ public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
 
         KafkaStreams.StateListener stateListener = (newState, oldState) -> {
             if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
-                System.out.println(topology.describe());
-                System.out.println(kafkaStreams.toString());
+                CONSOLE_LOG.info("Application has gone from REBALANCING to RUNNING ");
+                CONSOLE_LOG.info(kafkaStreams.toString());
+            }
+
+            if (newState == KafkaStreams.State.REBALANCING) {
+                CONSOLE_LOG.info("Application is entering REBALANCING phase");
             }
         };
 
         kafkaStreams.setStateListener(stateListener);
-        System.out.println("ZMart Advanced Requirements Metrics Application Started");
+        CONSOLE_LOG.info("ZMart Advanced Requirements Metrics Application Started");
         kafkaStreams.cleanUp();
         CountDownLatch stopSignal = new CountDownLatch(1);
 
         Runtime.getRuntime().addShutdownHook(new Thread(()-> {
-            System.out.println("Shutting down the Kafka Streams Application now");
+            CONSOLE_LOG.info("Shutting down the Kafka Streams Application now");
             kafkaStreams.close();
             MockDataProducer.shutdown();
             stopSignal.countDown();
@@ -144,10 +144,8 @@ public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
         kafkaStreams.start();
 
         stopSignal.await();
-        System.out.println("All done now, good-bye");
+        CONSOLE_LOG.info("All done now, good-bye");
     }
-
-
 
 
     private static Properties getProperties() {

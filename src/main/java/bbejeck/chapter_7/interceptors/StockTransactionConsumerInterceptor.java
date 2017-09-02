@@ -5,6 +5,8 @@ import org.apache.kafka.clients.consumer.ConsumerInterceptor;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -14,6 +16,7 @@ import java.util.Map;
  */
 public class StockTransactionConsumerInterceptor implements ConsumerInterceptor<String, StockTransaction> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(StockTransactionConsumerInterceptor.class);
 
     public StockTransactionConsumerInterceptor() {
         System.out.println("Built StockTransactionConsumerInterceptor");
@@ -21,7 +24,7 @@ public class StockTransactionConsumerInterceptor implements ConsumerInterceptor<
 
     @Override
     public ConsumerRecords<String, StockTransaction> onConsume(ConsumerRecords<String, StockTransaction> consumerRecords) {
-        System.out.println("Intercepted records "+consumerRecords);
+        LOG.info("Intercepted records "+consumerRecords);
         return consumerRecords;
     }
 

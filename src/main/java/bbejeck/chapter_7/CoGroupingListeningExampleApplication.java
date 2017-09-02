@@ -78,8 +78,7 @@ public class CoGroupingListeningExampleApplication {
         kafkaStreams.cleanUp();
         kafkaStreams.start();
         Thread.sleep(10000);
-        //TODO do this with state listener
-        //TODO also add topology#describe
+
         System.out.println(kafkaStreams.toString());
         Thread.sleep(70000);
         System.out.println("Shutting down the Co-Grouping App now");
