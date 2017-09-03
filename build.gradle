@@ -80,6 +80,21 @@ task runCoGrouping_Chapter_6(type: JavaExec) {
     main = "bbejeck.chapter_6.CoGroupingApplication"
 }
 
+task runCoGroupinStateRetoreListener_Chapter_7(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_7.CoGroupingListeningExampleApplication"
+}
+
+task runStockPerformanceConsumerInterceptor_Chapter_7(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_7.StockPerformanceStreamsAndProcessorMetricsApplication"
+}
+
+task runZmartJmxAndProducerInterecptor_Chapter_7(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_7.ZMartKafkaStreamsAdvancedReqsMetricsApp"
+}
+
 
 jar {
   archiveName='bbejeck-kafka-streams-in-action-1.0-SNAPSHOT.jar'

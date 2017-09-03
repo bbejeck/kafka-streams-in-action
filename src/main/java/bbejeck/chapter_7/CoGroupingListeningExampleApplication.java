@@ -21,6 +21,8 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.Stores;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +30,8 @@ import java.util.Map;
 import java.util.Properties;
 
 public class CoGroupingListeningExampleApplication {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CoGroupingListeningExampleApplication.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -69,19 +73,23 @@ public class CoGroupingListeningExampleApplication {
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamsConfig);
         kafkaStreams.setGlobalStateRestoreListener(new LoggingStateRestoreListener());
 
-        kafkaStreams.setUncaughtExceptionHandler((thread, exception) -> {
-            System.out.println("Thread [" + thread + "] encountered [" + exception.getMessage() +"]");
+        kafkaStreams.setUncaughtExceptionHandler((thread, exception) ->
+            LOG.error("Thread [{}] encountered [{}]", thread.getName(), exception.getMessage())
+        );
+
+        kafkaStreams.setStateListener((newState, oldState) -> {
+           if (oldState == KafkaStreams.State.REBALANCING && newState== KafkaStreams.State.RUNNING) {
+               LOG.info(kafkaStreams.toString());
+           }
         });
 
-        System.out.println(topology.describe());
-        System.out.println("Co-Grouping App Started");
+
+        LOG.info("Co-Grouping App Started");
         kafkaStreams.cleanUp();
         kafkaStreams.start();
-        Thread.sleep(10000);
 
-        System.out.println(kafkaStreams.toString());
         Thread.sleep(70000);
-        System.out.println("Shutting down the Co-Grouping App now");
+        LOG.info("Shutting down the Co-Grouping metrics App now");
         kafkaStreams.close();
         MockDataProducer.shutdown();
     }

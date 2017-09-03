@@ -2,6 +2,7 @@ package bbejeck.chapter_7.interceptors;
 
 import bbejeck.model.StockTransaction;
 import org.apache.kafka.clients.consumer.ConsumerInterceptor;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -25,7 +27,7 @@ public class StockTransactionConsumerInterceptor implements ConsumerInterceptor<
 
     @Override
     public ConsumerRecords<String, StockTransaction> onConsume(ConsumerRecords<String, StockTransaction> consumerRecords) {
-        LOG.info("Intercepted records {}",  consumerRecords.iterator());
+        LOG.info("Intercepted ConsumerRecords {}",  buildMessage(consumerRecords.iterator()));
         return consumerRecords;
     }
 
@@ -42,5 +44,13 @@ public class StockTransactionConsumerInterceptor implements ConsumerInterceptor<
     @Override
     public void configure(Map<String, ?> map) {
         
+    }
+
+    private String buildMessage(Iterator<ConsumerRecord<String, StockTransaction>> consumerRecords) {
+        StringBuilder builder = new StringBuilder();
+        while (consumerRecords.hasNext()) {
+            builder.append(consumerRecords.next());
+        }
+        return builder.toString();
     }
 }

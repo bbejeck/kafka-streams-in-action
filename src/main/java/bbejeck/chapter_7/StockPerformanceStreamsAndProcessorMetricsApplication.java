@@ -16,6 +16,8 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.Stores;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.Properties;
 
 public class StockPerformanceStreamsAndProcessorMetricsApplication {
 
+    private static final Logger LOG = LoggerFactory.getLogger(StockPerformanceStreamsAndProcessorMetricsApplication.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -43,29 +46,29 @@ public class StockPerformanceStreamsAndProcessorMetricsApplication {
 
         builder.stream(stringSerde, stockTransactionSerde, "stock-transactions")
                 .transform(() -> new StockPerformanceMetricsTransformer(stocksStateStore, differentialThreshold), stocksStateStore)
-                .peek((k, v)-> System.out.println("[stock-performance] key:"+ k +" value: " +v))
+                .peek((k, v)-> LOG.info("[stock-performance] key: {} value: {}" , k, v))
                 .to(stringSerde, stockPerformanceSerde, "stock-performance");
 
 
         KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfig);
         MockDataProducer.produceStockTransactionsWithKeyFunction(50, 50, 25, StockTransaction::getSymbol);
-        System.out.println("Stock Analysis KStream/Process API App Started");
+        LOG.info("Stock Analysis KStream/Process API Metrics App Started");
         kafkaStreams.cleanUp();
         kafkaStreams.start();
 
-        System.out.println(kafkaStreams.metrics());
+
 
 
         Thread.sleep(70000);
 
 
-        System.out.println("Shutting down the Stock KStream/Process API Analysis App now");
+        LOG.info("Shutting down the Stock KStream/Process API Analysis Metrics  App now");
         for (Map.Entry<MetricName, ? extends Metric> metricNameEntry :kafkaStreams.metrics().entrySet()) {
             Metric metric = metricNameEntry.getValue();
             MetricName metricName = metricNameEntry.getKey();
             if(metric.value() != 0.0 && metric.value() != Double.NEGATIVE_INFINITY) {
-                System.out.print("MetricName " + metricName.name());
-                System.out.println(" = " + metric.value());
+                LOG.info("MetricName {}", metricName.name());
+                LOG.info(" = {}", metric.value());
             }   
 
         }

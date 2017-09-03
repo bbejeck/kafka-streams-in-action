@@ -1,5 +1,13 @@
 ### Source Code for Kafka Streams in Action
 
+#### Chapter 7 updates
+
+1. Very exciting times for Kafka and Kafka Streams! We are headed towards a 1.0 release in October.
+2. As result we're back to using snapshot versions until the final release in October.
+2. Lots of things have been updated in Kafka Streams, including some deprecations.  My intent is to only use the
+latest code in the examples, but getting rid of the deprecated code in the examples will take a little time, so there
+may still be some use of deprecated classes and methods here and there.
+
 
 #### Updates
 
@@ -15,8 +23,8 @@ exist yet, but Kafka is configured to create topics automatically.
 3. I will be updating this file with a "road map" of where in the book maps to
 which examples.
 
-4. There are some exciting new features coming in the 0.11 release of Kafka and Kafka Streams coming early to mid June, stay tuned
-as this code base will evolve.  Which also means we won't need to bundle the Kafka dependencies but include them in the gradle file.
+4. There are some exciting new features coming in the 1.0.0 release of Kafka and Kafka Streams coming in October stay tuned
+as this code base will evolve. 
 
 
 
@@ -31,12 +39,14 @@ the first time you run the ./gradlew or gradlew command gradle will be installed
 
 #### Included Dependencies
 
-1. kafka_2.12-0.11.0.1-SNAPSHOT.tgz
+1. kafka-streams-1.0.0-SNAPSHOT.jar
+2. kafka-clients-1.0.0-SNAPSHOT.jar 
+3. kafka_2.12-1.0.0-SNAPSHOT.tgz
 
-Now that Kafka 0.11.0.0 is released, the Kafka Streams and Kafka Client libs are no longer
-included with the source code, but are listed as dependencies in the gradle.build file. 
 
-Kafka itself (version 2.12-0.11.0.1-SNAPSHOT) is included as a convenience. 
+Since the book is targeting the Kafka 1.0 release, I'm back to including the 
+snapshot versions of Kafka-Streams and Kafka-Clients
+Kafka itself (version 2.12-1.0.0-SNAPSHOT) is included as a convenience. 
 
 All other dependencies are taken care of via gradle.
  
@@ -50,19 +60,19 @@ The gradle eclipse and intellij plugins are included in the build.gradle file.
 Run tar xvzf  2.12-0.11.0.1-SNAPSHOT.tgz some where on your computer.
 
 #### Running Kafka
-1. To start kafka go to <install dir>/2.12-0.11.0.1-SNAPSHOT/bin
+1. To start kafka go to <install dir>/2.12-1.0.0-SNAPSHOT/bin
 2. Run zookeeper-server-start.sh
 3. Run kafka-server-start.sh
 
-If you are on windows, go to the <install dir>/2.12-0.11.0.1-SNAPSHOT/bin/windows directory
+If you are on windows, go to the <install dir>/2.12-1.0.0-SNAPSHOT/bin/windows directory
 and run the .bat files with the same name and in the same order.
  
 #### Stopping Kafka
-1. To start kafka go to <install dir>/2.12-0.11.0.1-SNAPSHOT/bin
+1. To start kafka go to <install dir>/2.12-1.0.0-SNAPSHOT/bin
 2. Run kafka-server-stop.sh
 3. Run zookeeper-server-stop.sh
 
-If you are on windows, go to the <install dir>/2.12-0.11.0.1-SNAPSHOT/bin/windows directory
+If you are on windows, go to the <install dir>/2.12-1.0.0-SNAPSHOT/bin/windows directory
 and run the .bat files with the same name and in the same order.
 
 #### Sample Kafka Streams Code
@@ -100,6 +110,9 @@ we have so far:
 11. ./gradlew runStockPerformance_Chapter_6
 12. ./gradlew runStockPerformanceStreamsProcess_Chapter_6
 13. ./gradlew runCoGrouping_Chapter_6
+14. ./gradlew runCoGroupinStateRetoreListener_Chapter_7
+15. ./gradlew runStockPerformanceConsumerInterceptor_Chapter_7
+16. ./gradlew runZmartJmxAndProducerInterecptor_Chapter_7
 
 #### Example Kafka Streams Program Output
 When running the examples, the program will generate data to flow through Kafka and into the sample
