@@ -8,6 +8,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import java.util.Map;
 
 /**
@@ -24,13 +25,13 @@ public class StockTransactionConsumerInterceptor implements ConsumerInterceptor<
 
     @Override
     public ConsumerRecords<String, StockTransaction> onConsume(ConsumerRecords<String, StockTransaction> consumerRecords) {
-        LOG.info("Intercepted records {}", consumerRecords);
+        LOG.info("Intercepted records {}",  consumerRecords.iterator());
         return consumerRecords;
     }
 
     @Override
     public void onCommit(Map<TopicPartition, OffsetAndMetadata> map) {
-
+         LOG.info("Commit information {}",  map);
     }
 
     @Override

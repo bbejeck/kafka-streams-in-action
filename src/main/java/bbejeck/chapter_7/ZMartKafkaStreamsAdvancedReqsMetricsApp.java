@@ -42,9 +42,9 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 
-public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
+    public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
 
-    private static final Logger CONSOLE_LOG = Logger.getLogger(ZMartKafkaStreamsAdvancedReqsMetricsApp.class);
+    private static final Logger LOG = Logger.getLogger(ZMartKafkaStreamsAdvancedReqsMetricsApp.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -117,22 +117,22 @@ public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
 
         KafkaStreams.StateListener stateListener = (newState, oldState) -> {
             if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
-                CONSOLE_LOG.info("Application has gone from REBALANCING to RUNNING ");
-                CONSOLE_LOG.info(kafkaStreams.toString());
+                LOG.info("Application has gone from REBALANCING to RUNNING ");
+                LOG.info(kafkaStreams.toString());
             }
 
             if (newState == KafkaStreams.State.REBALANCING) {
-                CONSOLE_LOG.info("Application is entering REBALANCING phase");
+                LOG.info("Application is entering REBALANCING phase");
             }
         };
 
         kafkaStreams.setStateListener(stateListener);
-        CONSOLE_LOG.info("ZMart Advanced Requirements Metrics Application Started");
+        LOG.info("ZMart Advanced Requirements Metrics Application Started");
         kafkaStreams.cleanUp();
         CountDownLatch stopSignal = new CountDownLatch(1);
 
         Runtime.getRuntime().addShutdownHook(new Thread(()-> {
-            CONSOLE_LOG.info("Shutting down the Kafka Streams Application now");
+            LOG.info("Shutting down the Kafka Streams Application now");
             kafkaStreams.close();
             MockDataProducer.shutdown();
             stopSignal.countDown();
@@ -144,7 +144,7 @@ public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
         kafkaStreams.start();
 
         stopSignal.await();
-        CONSOLE_LOG.info("All done now, good-bye");
+        LOG.info("All done now, good-bye");
     }
 
 

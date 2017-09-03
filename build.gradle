@@ -90,8 +90,7 @@ repositories {
 }
 
 configurations {
-    compile.exclude group:'ch.qos.logback'
-    compile.exclude group: 'org.slf4j', module: 'slf4j-log4j12'  //need to do this to prevent stackoverflow error from using javafaker
+  compile.exclude group:'ch.qos.logback'
 }
 
 compileJava {
@@ -109,7 +108,7 @@ dependencies {
     compile group: 'de.julielab', name: 'aliasi-lingpipe', version:'4.1.0'
     compile group: 'org.apache.commons', name:'commons-lang3', version:'3.4'
     compile group: 'log4j', name: 'log4j', version: '1.2.17'
-    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25' //need to have this to enable logging
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
     compile group: 'io.dropwizard', name:'dropwizard-core', version:'1.0.5'
     compile group: 'com.sparkjava', name: 'spark-core', version: '2.6.0'
     compile group: 'com.esotericsoftware', name: 'kryo', version: '4.0.0'
@@ -117,5 +116,9 @@ dependencies {
     compile files('libs/kafka-streams-1.0.0-SNAPSHOT.jar','libs/kafka-clients-1.0.0-SNAPSHOT.jar')
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.3.6'
     testCompile group: 'junit', name: 'junit', version:'4.11'
-    compile group: 'com.github.javafaker', name: 'javafaker', version: '0.12'
+    compile (group: 'com.github.javafaker', name: 'javafaker', version: '0.12') {
+        exclude group:'ch.qos.logback'
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
+    
 }
