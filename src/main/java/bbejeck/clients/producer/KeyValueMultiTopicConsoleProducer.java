@@ -4,11 +4,14 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Properties;
+
 
 /**
  * This class is used to specifically publish key-value pairs to the
@@ -24,11 +27,12 @@ import java.util.Properties;
  */
 public class KeyValueMultiTopicConsoleProducer {
 
+    private static final Logger LOG = LoggerFactory.getLogger(KeyValueMultiTopicConsoleProducer.class);
 
     public static void main(String[] args) throws Exception {
 
         if (args.length == 0) {
-            System.out.println("Please specify a topic or comma separated list of topics");
+            LOG.info("Please specify a topic or comma separated list of topics");
             System.exit(1);
         }
 
@@ -41,35 +45,35 @@ public class KeyValueMultiTopicConsoleProducer {
         properties.put("acks", "1");
         properties.put("retries", "3");
 
-        Producer<String, String> producer = new KafkaProducer<>(properties);
+        try(Producer<String, String> producer = new KafkaProducer<>(properties)) {
 
-        Callback callback = (metadata, exception) -> {
-            if (exception != null) {
-                exception.printStackTrace();
+            Callback callback = (metadata, exception) -> {
+                if (exception != null) {
+                    LOG.error("Error producing message", exception);
+                }
+            };
+
+            LOG.info("This is a key-value command line producer");
+            LOG.info("Enter messages in key:value format, type 'quit' to exit");
+            LOG.info("Sending messages to topics {}",  Arrays.toString(topics));
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+            String line = reader.readLine();
+
+            while (!(line.equalsIgnoreCase("quit"))) {
+
+                String[] keyValue = line.split(":");
+                String key = keyValue[0];
+                String value = keyValue[1];
+
+                for (String topic : topics) {
+                    ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, value);
+                    producer.send(record, callback);
+                }
+                line = reader.readLine();
             }
-        };
-
-        System.out.println("This is a key-value command line producer");
-        System.out.println("Enter messages in key:value format, type 'quit' to exit");
-        System.out.println("Sending messages to topics "+ Arrays.toString(topics));
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-
-        String line = reader.readLine();
-
-        while (!(line.equalsIgnoreCase("quit"))) {
-
-            String[] keyValue = line.split(":");
-            String key = keyValue[0];
-            String value = keyValue[1];
-
-            for (String topic : topics) {
-                ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, value);
-                producer.send(record, callback);
-            }
-            line = reader.readLine();
         }
-
     }
 
 
