@@ -59,7 +59,7 @@ The gradle eclipse and intellij plugins are included in the build.gradle file.
 2. To set up for intellij run ./gradlew idea (for windows gradlew idea) from the base directory of this repo.
 
 #### Installing the included Kafka
-Run tar xvzf  2.12-0.11.0.1-SNAPSHOT.tgz some where on your computer.
+Run tar xvzf  2.12-1.0.0-SNAPSHOT.tgz some where on your computer.
 
 #### Running Kafka
 1. To start kafka go to <install dir>/2.12-1.0.0-SNAPSHOT/bin
