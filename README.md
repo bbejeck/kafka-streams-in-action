@@ -7,7 +7,8 @@
 3. Lots of things have been updated in Kafka Streams, including some deprecations. Chapter 6 an 7 have been updated to use
   the latest API.  Eventually all of the code will get transitioned to the latest API but it will take a little time, so there
 may still be some use of deprecated classes and methods here and there.
-4. Logging as been added to the application and there is now a logs directory with logs for the application and various examples.
+4. Logging as been added to the application and there is now a logs directory with logs for the application and various examples. Eventually the all code in the project
+will get migrated to logging vs sysout.
 
 
 #### Updates
