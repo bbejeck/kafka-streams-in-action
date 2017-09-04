@@ -14,6 +14,8 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -34,6 +36,8 @@ import static bbejeck.util.Topics.*;
  * for a total of 1,000 records in one minute then it will shutdown.
  */
 public class MockDataProducer {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MockDataProducer.class);
 
     private static Producer<String, String> producer;
     private static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
@@ -65,14 +69,14 @@ public class MockDataProducer {
                     ProducerRecord<String, String> record = new ProducerRecord<>(TRANSACTIONS_TOPIC, null, value);
                     producer.send(record, callback);
                 }
-                System.out.println("Record batch sent");
+                LOG.info("Record batch sent");
                 try {
                     Thread.sleep(6000);
                 } catch (InterruptedException e) {
                     Thread.interrupted();
                 }
             }
-            System.out.println("Done generating purchase data");
+            LOG.info("Done generating purchase data");
 
         };
         executorService.submit(generateTask);
@@ -98,7 +102,7 @@ public class MockDataProducer {
                     ProducerRecord<String, String> record = new ProducerRecord<>(Topics.POPS_HOPS_PURCHASES.topicName(), null, jsonTransaction);
                     producer.send(record, callback);
                 }
-                System.out.println("Beer Purchases Sent");
+                LOG.info("Beer Purchases Sent");
 
                 try {
                     Thread.sleep(5000);
@@ -106,7 +110,7 @@ public class MockDataProducer {
                     Thread.interrupted();
                 }
             }
-            System.out.println("Done generating beer purchases");
+            LOG.info("Done generating beer purchases");
 
         };
         executorService.submit(produceBeerSales);
@@ -132,7 +136,7 @@ public class MockDataProducer {
                     ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TRANSACTIONS_TOPIC, null, jsonTransaction);
                     producer.send(record, callback);
                 }
-                System.out.println("Stock Transactions Batch Sent");
+                LOG.info("Stock Transactions Batch Sent");
 
                 try {
                     Thread.sleep(5000);
@@ -140,7 +144,7 @@ public class MockDataProducer {
                     Thread.interrupted();
                 }
             }
-            System.out.println("Done generating stock data");
+            LOG.info("Done generating stock data");
 
         };
         executorService.submit(produceStockTransactionsTask);
@@ -165,7 +169,7 @@ public class MockDataProducer {
                 producer.send(record, callback);
             }
 
-            System.out.println("Financial news sent");
+            LOG.info("Financial news sent");
             counter = 0;
             while (counter++ < numberIterations) {
                 List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, 50);
@@ -174,7 +178,7 @@ public class MockDataProducer {
                     ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TRANSACTIONS_TOPIC, keyFunction.apply(transaction), jsonTransaction);
                     producer.send(record, callback);
                 }
-                System.out.println("Stock Transactions Batch Sent");
+                LOG.info("Stock Transactions Batch Sent");
 
                 try {
                     Thread.sleep(5000);
@@ -182,7 +186,7 @@ public class MockDataProducer {
                     Thread.interrupted();
                 }
             }
-            System.out.println("Done generating stock data");
+            LOG.info("Done generating stock data");
 
         };
         executorService.submit(produceStockTransactionsTask);
@@ -206,14 +210,14 @@ public class MockDataProducer {
                     producer.send(record, callback);
                 }
 
-                System.out.println("Day Trading Click Events sent");
+                LOG.info("Day Trading Click Events sent");
                 List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, numClickEvents);
                 for (StockTransaction transaction : transactions) {
                     String jsonTransaction = convertToJson(transaction);
                     ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TRANSACTIONS_TOPIC, keyFunction.apply(transaction), jsonTransaction);
                     producer.send(record, callback);
                 }
-                System.out.println("Stock Transactions Batch Sent");
+                LOG.info("Stock Transactions Batch Sent");
 
                 try {
                     Thread.sleep(5000);
@@ -221,7 +225,7 @@ public class MockDataProducer {
                     Thread.interrupted();
                 }
             }
-            System.out.println("Done generating stock data");
+            LOG.info("Done generating stock data");
 
         };
         executorService.submit(produceStockTransactionsTask);
@@ -259,7 +263,7 @@ public class MockDataProducer {
             ProducerRecord<String, String> record = new ProducerRecord<>(FINANCIAL_NEWS, industry, news.get(counter++));
             producer.send(record, callback);
         }
-        System.out.println("Financial news sent");
+        LOG.info("Financial news sent");
     }
 
     private static List<DataGenerator.Customer> getCustomers(int numberCustomers) {
@@ -292,14 +296,14 @@ public class MockDataProducer {
 
                     company.updateStockPrice();
                 }
-                System.out.println("Stock updates sent");
+                LOG.info("Stock updates sent");
                 try {
                     Thread.sleep(4000);
                 } catch (InterruptedException e) {
                      Thread.currentThread().interrupt();
                 }
             }
-            //System.out.println("Done generating StockTickerData Data");
+            //LOG.info("Done generating StockTickerData Data");
 
         };
         executorService.submit(generateTask);
@@ -325,21 +329,21 @@ public class MockDataProducer {
                     ProducerRecord<String, String> record = new ProducerRecord<>(YELLING_APP_TOPIC, null, value);
                     producer.send(record, callback);
                 }
-                System.out.println("Text batch sent");
+                LOG.info("Text batch sent");
                 try {
                     Thread.sleep(6000);
                 } catch (InterruptedException e) {
                     Thread.interrupted();
                 }
             }
-            System.out.println("Done generating text data");
+            LOG.info("Done generating text data");
 
         };
         executorService.submit(generateTask);
     }
 
     public static void shutdown() {
-        System.out.println("Shutting down data generation");
+        LOG.info("Shutting down data generation");
 
         if (executorService != null) {
             executorService.shutdownNow();
@@ -354,7 +358,7 @@ public class MockDataProducer {
 
     private static void init() {
         if (producer == null) {
-            System.out.println("Initializing the producer");
+            LOG.info("Initializing the producer");
             Properties properties = new Properties();
             properties.put("bootstrap.servers", "localhost:9092");
             properties.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
@@ -369,7 +373,7 @@ public class MockDataProducer {
                     exception.printStackTrace();
                 }
             };
-            System.out.println("Producer initialized");
+            LOG.info("Producer initialized");
         }
     }
 

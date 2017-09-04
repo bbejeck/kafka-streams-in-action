@@ -4,9 +4,10 @@
 
 1. Very exciting times for Kafka and Kafka Streams! We are headed towards a 1.0 release in October.
 2. As result we're back to using snapshot versions until the final release in October.
-2. Lots of things have been updated in Kafka Streams, including some deprecations.  My intent is to only use the
-latest code in the examples, but getting rid of the deprecated code in the examples will take a little time, so there
+3. Lots of things have been updated in Kafka Streams, including some deprecations. Chapter 6 an 7 have been updated to use
+  the latest API.  Eventually all of the code will get transitioned to the latest API but it will take a little time, so there
 may still be some use of deprecated classes and methods here and there.
+4. Logging as been added to the application and there is now a logs directory with logs for the application and various examples.
 
 
 #### Updates
