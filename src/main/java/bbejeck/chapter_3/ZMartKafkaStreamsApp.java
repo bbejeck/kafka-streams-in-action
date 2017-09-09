@@ -25,9 +25,9 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 
 import java.util.Properties;
@@ -48,9 +48,9 @@ public class ZMartKafkaStreamsApp {
         Serde<RewardAccumulator> rewardAccumulatorSerde = StreamsSerdes.RewardAccumulatorSerde();
         Serde<String> stringSerde = Serdes.String();
 
-        KStreamBuilder kStreamBuilder = new KStreamBuilder();
+        StreamsBuilder streamsBuilder = new StreamsBuilder();
 
-        KStream<String,Purchase> purchaseKStream = kStreamBuilder.stream(stringSerde, purchaseSerde, "transactions")
+        KStream<String,Purchase> purchaseKStream = streamsBuilder.stream(stringSerde, purchaseSerde, "transactions")
                 .mapValues(p -> Purchase.builder(p).maskCreditCard().build());
         
         KStream<String, PurchasePattern> patternKStream = purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build());
@@ -70,7 +70,7 @@ public class ZMartKafkaStreamsApp {
         purchaseKStream.to(Serdes.String(),purchaseSerde,"purchases");
 
 
-        KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder,streamsConfig);
+        KafkaStreams kafkaStreams = new KafkaStreams(streamsBuilder.build(),streamsConfig);
         System.out.println("ZMart First Kafka Streams Application Started");
         kafkaStreams.start();
         Thread.sleep(65000);

@@ -1,9 +1,9 @@
 package bbejeck.chapter_6;
 
 
-import bbejeck.chapter_6.processor.cogrouping.ClickEventProcessor;
-import bbejeck.chapter_6.processor.cogrouping.AggregatingProcessor;
 import bbejeck.chapter_6.processor.KStreamPrinter;
+import bbejeck.chapter_6.processor.cogrouping.AggregatingProcessor;
+import bbejeck.chapter_6.processor.cogrouping.ClickEventProcessor;
 import bbejeck.chapter_6.processor.cogrouping.StockTransactionProcessor;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.ClickEvent;
@@ -18,8 +18,10 @@ import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.processor.TopologyBuilder;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
+import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 
 import java.util.HashMap;
@@ -27,10 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static bbejeck.chapter_6.processor.cogrouping.AggregatingProcessor.TUPLE_STORE_NAME;
+
 public class CoGroupingApplication {
 
     public static void main(String[] args) throws Exception {
-
 
 
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
@@ -47,20 +50,22 @@ public class CoGroupingApplication {
 
         Topology topology = new Topology();
         Map<String, String> changeLogConfigs = new HashMap<>();
-        changeLogConfigs.put("retention.ms","120000" );
-        changeLogConfigs.put("cleanup.policy", "compact");
+        changeLogConfigs.put("retention.ms", "120000");
+        changeLogConfigs.put("cleanup.policy", "compact,delete");
 
+
+        KeyValueBytesStoreSupplier storeSupplier = Stores.inMemoryKeyValueStore(TUPLE_STORE_NAME);
+        StoreBuilder<KeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>>> builder =
+                Stores.keyValueStoreBuilder(storeSupplier,
+                        Serdes.String(),
+                        eventPerformanceTuple).withLoggingEnabled(changeLogConfigs);
 
         topology.addSource("Txn-Source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
-                .addSource( "Events-Source", stringDeserializer, clickEventDeserializer, "events")
+                .addSource("Events-Source", stringDeserializer, clickEventDeserializer, "events")
                 .addProcessor("Txn-Processor", StockTransactionProcessor::new, "Txn-Source")
                 .addProcessor("Events-Processor", ClickEventProcessor::new, "Events-Source")
                 .addProcessor("CoGrouping-Processor", AggregatingProcessor::new, "Txn-Processor", "Events-Processor")
-                .addStateStore(Stores.create(AggregatingProcessor.TUPLE_STORE_NAME)
-                                     .withKeys(Serdes.String())
-                                     .withValues(eventPerformanceTuple)
-                                     .persistent().enableLogging(changeLogConfigs)
-                                     .build(), "CoGrouping-Processor")
+                .addStateStore(builder, "CoGrouping-Processor")
                 .addSink("Tuple-Sink", "cogrouped-results", stringSerializer, tupleSerializer, "CoGrouping-Processor");
 
         topology.addProcessor("Print", new KStreamPrinter("Co-Grouping"), "CoGrouping-Processor");
@@ -85,7 +90,7 @@ public class CoGroupingApplication {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "cogrouping-group");
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "cogrouping-appid");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"latest");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());

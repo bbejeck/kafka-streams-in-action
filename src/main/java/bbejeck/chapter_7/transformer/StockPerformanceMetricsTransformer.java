@@ -38,7 +38,7 @@ public class StockPerformanceMetricsTransformer implements Transformer<String, S
         keyValueStore = (KeyValueStore) processorContext.getStateStore(stocksStateStore);
         this.processorContext = processorContext;
         
-        this.processorContext.schedule(5000, PunctuationType.SYSTEM_TIME, this::doPunctuate);
+        this.processorContext.schedule(5000, PunctuationType.WALL_CLOCK_TIME, this::doPunctuate);
 
 
         final String tagKey = "task-id";

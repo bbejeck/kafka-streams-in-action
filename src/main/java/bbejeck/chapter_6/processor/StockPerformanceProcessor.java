@@ -31,7 +31,7 @@ public class StockPerformanceProcessor extends AbstractProcessor<String, StockTr
                                                                                context(),
                                                                                keyValueStore);
         
-      context().schedule(10000, PunctuationType.SYSTEM_TIME, punctuator);
+      context().schedule(10000, PunctuationType.WALL_CLOCK_TIME, punctuator);
     }
 
     @Override

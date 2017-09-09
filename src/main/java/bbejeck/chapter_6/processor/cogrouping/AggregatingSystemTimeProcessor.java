@@ -11,7 +11,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.kafka.streams.processor.PunctuationType.SYSTEM_TIME;
+import static org.apache.kafka.streams.processor.PunctuationType.WALL_CLOCK_TIME;
 
 /**
  * User: Bill Bejeck
@@ -30,7 +30,7 @@ public class AggregatingSystemTimeProcessor extends AbstractProcessor<String, Tu
         super.init(context);
         tupleStore = (KeyValueStore) context().getStateStore(TUPLE_STORE_NAME);
         AggregationPunctuator punctuator = new AggregationPunctuator(tupleStore, context());
-        context().schedule(15000L, SYSTEM_TIME, punctuator);
+        context().schedule(15000L, WALL_CLOCK_TIME, punctuator);
     }
 
     @Override

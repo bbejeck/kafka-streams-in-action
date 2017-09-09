@@ -20,6 +20,9 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
+import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import static bbejeck.chapter_6.processor.cogrouping.AggregatingProcessor.TUPLE_STORE_NAME;
 
 public class CoGroupingListeningExampleApplication {
 
@@ -50,7 +55,11 @@ public class CoGroupingListeningExampleApplication {
         Topology topology = new Topology();
         Map<String, String> changeLogConfigs = new HashMap<>();
         changeLogConfigs.put("retention.ms","120000" );
-        changeLogConfigs.put("cleanup.policy", "compact");
+        changeLogConfigs.put("cleanup.policy", "compact,delete");
+
+        KeyValueBytesStoreSupplier storeSupplier = Stores.inMemoryKeyValueStore(TUPLE_STORE_NAME);
+        StoreBuilder<KeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>>> builder = Stores.keyValueStoreBuilder(storeSupplier, Serdes.String(), eventPerformanceTuple);
+
 
 
         topology.addSource("Txn-Source", stringDeserializer, stockTransactionDeserializer, "stock-transactions")
@@ -58,11 +67,7 @@ public class CoGroupingListeningExampleApplication {
                 .addProcessor("Txn-Processor", StockTransactionProcessor::new, "Txn-Source")
                 .addProcessor("Events-Processor", ClickEventProcessor::new, "Events-Source")
                 .addProcessor("CoGrouping-Processor", AggregatingProcessor::new, "Txn-Processor", "Events-Processor")
-                .addStateStore(Stores.create(AggregatingProcessor.TUPLE_STORE_NAME)
-                                     .withKeys(Serdes.String())
-                                     .withValues(eventPerformanceTuple)
-                                     .persistent().enableLogging(changeLogConfigs)
-                                     .build(), "CoGrouping-Processor")
+                .addStateStore(builder.withLoggingEnabled(changeLogConfigs), "CoGrouping-Processor")
                 .addSink("Tuple-Sink", "cogrouped-results", stringSerializer, tupleSerializer, "CoGrouping-Processor");
 
         topology.addProcessor("Print", new KStreamPrinter("Co-Grouping"), "CoGrouping-Processor");
