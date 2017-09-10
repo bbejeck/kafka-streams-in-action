@@ -9,6 +9,7 @@ import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -43,7 +44,7 @@ public class StockPerformanceStreamsAndProcessorMultipleValuesApplication {
         builder.addStateStore(Stores.create(stocksStateStore).withStringKeys()
                 .withValues(stockPerformanceSerde).inMemory().maxEntries(100).build());
 
-        builder.stream(stringSerde, stockTransactionSerde, "stock-transactions")
+        builder.stream("stock-transactions", Consumed.with(stringSerde, stockTransactionSerde))
                 .transform(transformerSupplier, stocksStateStore).flatMap((dummyKey,valueList) -> valueList)
                 .print(stringSerde, stockPerformanceSerde, "StockPerformance");
                 //.to(stringSerde, stockPerformanceSerde, "stock-performance");

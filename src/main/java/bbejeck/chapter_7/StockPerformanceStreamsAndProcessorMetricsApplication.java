@@ -11,6 +11,7 @@ import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
@@ -44,7 +45,7 @@ public class StockPerformanceStreamsAndProcessorMetricsApplication {
         builder.addStateStore(Stores.create(stocksStateStore).withStringKeys()
                 .withValues(stockPerformanceSerde).inMemory().maxEntries(100).build());
 
-        builder.stream(stringSerde, stockTransactionSerde, "stock-transactions")
+        builder.stream("stock-transactions", Consumed.with(stringSerde, stockTransactionSerde))
                 .transform(() -> new StockPerformanceMetricsTransformer(stocksStateStore, differentialThreshold), stocksStateStore)
                 .peek((k, v)-> LOG.info("[stock-performance] key: {} value: {}" , k, v))
                 .to(stringSerde, stockPerformanceSerde, "stock-performance");

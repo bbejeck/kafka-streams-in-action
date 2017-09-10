@@ -6,6 +6,7 @@ import bbejeck.model.RewardAccumulator;
 import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.KStream;
@@ -18,7 +19,7 @@ import org.apache.kafka.streams.kstream.Produced;
  */
 public class ZMartTopology {
 
-    public static Topology buildTopology() {
+    public static Topology build() {
         
         Serde<Purchase> purchaseSerde = StreamsSerdes.PurchaseSerde();
         Serde<PurchasePattern> purchasePatternSerde = StreamsSerdes.PurchasePatternSerde();
@@ -27,7 +28,7 @@ public class ZMartTopology {
 
         StreamsBuilder streamsBuilder = new StreamsBuilder();
 
-        KStream<String,Purchase> purchaseKStream = streamsBuilder.stream(stringSerde, purchaseSerde, "transactions")
+        KStream<String,Purchase> purchaseKStream = streamsBuilder.stream("transactions", Consumed.with(stringSerde, purchaseSerde))
                 .mapValues(p -> Purchase.builder(p).maskCreditCard().build());
 
         KStream<String, PurchasePattern> patternKStream = purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build());

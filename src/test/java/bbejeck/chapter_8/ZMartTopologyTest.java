@@ -9,7 +9,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.InternalTopologyAccess;
+import org.apache.kafka.streams.InternalTopologyTestingAccessor;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
@@ -30,7 +30,7 @@ import static org.junit.Assert.assertThat;
 public class ZMartTopologyTest {
 
     private static StreamsConfig streamsConfig;
-    private static Topology topology = ZMartTopology.buildTopology();
+    private static Topology topology = ZMartTopology.build();
     private static ProcessorTopologyTestDriver topologyTestDriver;
 
     @BeforeClass
@@ -45,10 +45,7 @@ public class ZMartTopologyTest {
 
         streamsConfig = new StreamsConfig(props);
 
-        InternalTopologyAccess internalTopologyAccess = new InternalTopologyAccess(topology);
-
-        topologyTestDriver = new ProcessorTopologyTestDriver(streamsConfig, internalTopologyAccess.getInternalBuilder());
-
+        topologyTestDriver = new ProcessorTopologyTestDriver(streamsConfig, InternalTopologyTestingAccessor.getInternalBuilderForTesting(topology));
     }
 
 
@@ -62,9 +59,15 @@ public class ZMartTopologyTest {
 
         Purchase purchase = DataGenerator.generatePurchase();
 
-        topologyTestDriver.process("transactions", "", purchase, stringSerde.serializer(),purchaseSerde.serializer());
+        topologyTestDriver.process("transactions",
+                null,
+                purchase,
+                stringSerde.serializer(),
+                purchaseSerde.serializer());
 
-        ProducerRecord<String, Purchase> record = topologyTestDriver.readOutput("purchases",stringSerde.deserializer(), purchaseSerde.deserializer());
+        ProducerRecord<String, Purchase> record = topologyTestDriver.readOutput("purchases",
+                stringSerde.deserializer(),
+                purchaseSerde.deserializer());
 
         Purchase expectedPurchase = Purchase.builder(purchase).maskCreditCard().build();
         assertThat(record.value(), equalTo(expectedPurchase));
@@ -72,12 +75,18 @@ public class ZMartTopologyTest {
 
         RewardAccumulator expectedRewardAccumulator = RewardAccumulator.builder(expectedPurchase).build();
 
-        ProducerRecord<String, RewardAccumulator>  accumulatorProducerRecord = topologyTestDriver.readOutput("rewards", stringSerde.deserializer(), rewardAccumulatorSerde.deserializer());
+        ProducerRecord<String, RewardAccumulator> accumulatorProducerRecord = topologyTestDriver.readOutput("rewards",
+                stringSerde.deserializer(),
+                rewardAccumulatorSerde.deserializer());
+
         assertThat(accumulatorProducerRecord.value(), equalTo(expectedRewardAccumulator));
 
         PurchasePattern expectedPurchasePattern = PurchasePattern.builder(expectedPurchase).build();
-        
-        ProducerRecord<String, PurchasePattern> purchasePatternProducerRecord = topologyTestDriver.readOutput("patterns", stringSerde.deserializer(), purchasePatternSerde.deserializer());
+
+        ProducerRecord<String, PurchasePattern> purchasePatternProducerRecord = topologyTestDriver.readOutput("patterns",
+                stringSerde.deserializer(),
+                purchasePatternSerde.deserializer());
+
         assertThat(purchasePatternProducerRecord.value(), equalTo(expectedPurchasePattern));
     }
 }
