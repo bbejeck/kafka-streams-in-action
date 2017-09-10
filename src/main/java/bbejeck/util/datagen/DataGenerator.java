@@ -77,6 +77,10 @@ public class DataGenerator {
         return clickEvents;
     }
 
+    public static Purchase generatePurchase() {
+        return generatePurchases(1, 1).get(0);
+    }
+
     public static List<Purchase> generatePurchases(int number, int numberCustomers) {
         List<Purchase> purchases = new ArrayList<>();
 

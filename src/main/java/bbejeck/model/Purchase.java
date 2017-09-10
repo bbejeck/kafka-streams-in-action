@@ -126,6 +126,47 @@ public class Purchase {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Purchase)) return false;
+
+        Purchase purchase = (Purchase) o;
+
+        if (quantity != purchase.quantity) return false;
+        if (Double.compare(purchase.price, price) != 0) return false;
+        if (firstName != null ? !firstName.equals(purchase.firstName) : purchase.firstName != null) return false;
+        if (lastName != null ? !lastName.equals(purchase.lastName) : purchase.lastName != null) return false;
+        if (customerId != null ? !customerId.equals(purchase.customerId) : purchase.customerId != null) return false;
+        if (creditCardNumber != null ? !creditCardNumber.equals(purchase.creditCardNumber) : purchase.creditCardNumber != null)
+            return false;
+        if (itemPurchased != null ? !itemPurchased.equals(purchase.itemPurchased) : purchase.itemPurchased != null)
+            return false;
+        if (department != null ? !department.equals(purchase.department) : purchase.department != null) return false;
+        if (employeeId != null ? !employeeId.equals(purchase.employeeId) : purchase.employeeId != null) return false;
+        if (zipCode != null ? !zipCode.equals(purchase.zipCode) : purchase.zipCode != null) return false;
+        return storeId != null ? storeId.equals(purchase.storeId) : purchase.storeId == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        result = firstName != null ? firstName.hashCode() : 0;
+        result = 31 * result + (lastName != null ? lastName.hashCode() : 0);
+        result = 31 * result + (customerId != null ? customerId.hashCode() : 0);
+        result = 31 * result + (creditCardNumber != null ? creditCardNumber.hashCode() : 0);
+        result = 31 * result + (itemPurchased != null ? itemPurchased.hashCode() : 0);
+        result = 31 * result + (department != null ? department.hashCode() : 0);
+        result = 31 * result + (employeeId != null ? employeeId.hashCode() : 0);
+        result = 31 * result + quantity;
+        temp = Double.doubleToLongBits(price);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));;
+        result = 31 * result + (zipCode != null ? zipCode.hashCode() : 0);
+        result = 31 * result + (storeId != null ? storeId.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "Purchase{" +
                 "firstName='" + firstName + '\'' +

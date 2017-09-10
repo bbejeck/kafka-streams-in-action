@@ -67,6 +67,33 @@ public class RewardAccumulator {
                 '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof RewardAccumulator)) return false;
+
+        RewardAccumulator that = (RewardAccumulator) o;
+
+        if (Double.compare(that.purchaseTotal, purchaseTotal) != 0) return false;
+        if (totalRewardPoints != that.totalRewardPoints) return false;
+        if (currentRewardPoints != that.currentRewardPoints) return false;
+        if (daysFromLastPurchase != that.daysFromLastPurchase) return false;
+        return customerId != null ? customerId.equals(that.customerId) : that.customerId == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        result = customerId != null ? customerId.hashCode() : 0;
+        temp = Double.doubleToLongBits(purchaseTotal);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + totalRewardPoints;
+        result = 31 * result + currentRewardPoints;
+        result = 31 * result + daysFromLastPurchase;
+        return result;
+    }
+
     public static Builder builder(Purchase purchase){return new Builder(purchase);}
 
     public static final class Builder {

@@ -18,7 +18,7 @@ import org.apache.kafka.streams.kstream.Produced;
  */
 public class ZMartTopology {
 
-    public static Topology buildTopolgy() {
+    public static Topology buildTopology() {
         
         Serde<Purchase> purchaseSerde = StreamsSerdes.PurchaseSerde();
         Serde<PurchasePattern> purchasePatternSerde = StreamsSerdes.PurchasePatternSerde();
@@ -32,7 +32,6 @@ public class ZMartTopology {
 
         KStream<String, PurchasePattern> patternKStream = purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build());
 
-        patternKStream.print(stringSerde,purchasePatternSerde,"patterns");
         patternKStream.to("patterns", Produced.with(stringSerde,purchasePatternSerde));
 
 

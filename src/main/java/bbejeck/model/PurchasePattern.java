@@ -73,6 +73,29 @@ public class PurchasePattern {
                 '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PurchasePattern)) return false;
+
+        PurchasePattern that = (PurchasePattern) o;
+
+        if (Double.compare(that.amount, amount) != 0) return false;
+        if (zipCode != null ? !zipCode.equals(that.zipCode) : that.zipCode != null) return false;
+        return item != null ? item.equals(that.item) : that.item == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        result = zipCode != null ? zipCode.hashCode() : 0;
+        result = 31 * result + (item != null ? item.hashCode() : 0);
+        temp = Double.doubleToLongBits(amount);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        return result;
+    }
+
     public static final class Builder {
         private String zipCode;
         private String item;
