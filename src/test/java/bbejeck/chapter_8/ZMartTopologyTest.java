@@ -9,12 +9,13 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.InternalTopologyTestingAccessor;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.TopologyAccessor;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
+import org.apache.kafka.streams.processor.internals.InternalTopologyBuilder;
 import org.apache.kafka.test.ProcessorTopologyTestDriver;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Properties;
@@ -29,12 +30,10 @@ import static org.junit.Assert.assertThat;
  */
 public class ZMartTopologyTest {
 
-    private static StreamsConfig streamsConfig;
-    private static Topology topology = ZMartTopology.build();
-    private static ProcessorTopologyTestDriver topologyTestDriver;
+    private  ProcessorTopologyTestDriver topologyTestDriver;
 
-    @BeforeClass
-    public static void setUp() {
+    @Before
+    public  void setUp() {
         Properties props = new Properties();
         props.put(StreamsConfig.CLIENT_ID_CONFIG, "FirstZmart-Kafka-Streams-Client");
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "zmart-purchases");
@@ -43,9 +42,11 @@ public class ZMartTopologyTest {
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
         props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
 
-        streamsConfig = new StreamsConfig(props);
-
-        topologyTestDriver = new ProcessorTopologyTestDriver(streamsConfig, InternalTopologyTestingAccessor.getInternalBuilderForTesting(topology));
+        StreamsConfig streamsConfig = new StreamsConfig(props);
+        Topology topology = ZMartTopology.build();
+        
+        InternalTopologyBuilder internalTopologyBuilder = TopologyAccessor.getInternal(topology);
+        topologyTestDriver = new ProcessorTopologyTestDriver(streamsConfig, internalTopologyBuilder);
     }
 
 

@@ -7,11 +7,11 @@ import org.apache.kafka.streams.processor.internals.InternalTopologyBuilder;
  * Date: 9/9/17
  * Time: 3:06 PM
  */
-public final class InternalTopologyTestingAccessor {
+public final class TopologyAccessor {
 
-    private InternalTopologyTestingAccessor() {}
+    private TopologyAccessor() {}
 
-    public static InternalTopologyBuilder getInternalBuilderForTesting(Topology topology) {
+    public static InternalTopologyBuilder getInternal(Topology topology) {
           return topology.internalTopologyBuilder;
     }
 }
