@@ -131,6 +131,12 @@ public class DataGenerator {
         return beerPurchases;
     }
 
+    public static StockTransaction generateStockTransaction() {
+         List<Customer> customers = generateCustomers(1);
+         List<PublicTradedCompany> companies = generatePublicTradedCompanies(1);
+         return generateStockTransactions(customers, companies, 1).get(0);
+    }
+
     public static List<StockTransaction> generateStockTransactions(List<Customer> customers, List<PublicTradedCompany> companies, int number) {
         List<StockTransaction> transactions = new ArrayList<>(number);
         Faker faker = new Faker();

@@ -15,13 +15,13 @@ import org.apache.kafka.streams.TopologyAccessor;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.processor.internals.InternalTopologyBuilder;
 import org.apache.kafka.test.ProcessorTopologyTestDriver;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * User: Bill Bejeck
@@ -32,7 +32,7 @@ public class ZMartTopologyTest {
 
     private  ProcessorTopologyTestDriver topologyTestDriver;
 
-    @Before
+    @BeforeEach
     public  void setUp() {
         Properties props = new Properties();
         props.put(StreamsConfig.CLIENT_ID_CONFIG, "FirstZmart-Kafka-Streams-Client");
