@@ -9,9 +9,7 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.TopologyAccessor;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
-import org.apache.kafka.streams.processor.internals.InternalTopologyBuilder;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.test.ProcessorTopologyTestDriver;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,10 +47,8 @@ public class StockPerformanceStreamsProcessorTopologyTest {
         StreamsConfig streamsConfig = new StreamsConfig(props);
 
         Topology topology = StockPerformanceStreamsProcessorTopology.build();
-        
-        InternalTopologyBuilder internalTopologyBuilder = TopologyAccessor.getInternal(topology);
-        topologyTestDriver = new ProcessorTopologyTestDriver(streamsConfig, internalTopologyBuilder);
-        
+
+        topologyTestDriver = new ProcessorTopologyTestDriver(streamsConfig, topology);
     }
 
 
