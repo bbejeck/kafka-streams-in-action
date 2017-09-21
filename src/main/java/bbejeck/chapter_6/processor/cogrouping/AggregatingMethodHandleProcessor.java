@@ -16,9 +16,9 @@ import java.util.List;
 import static org.apache.kafka.streams.processor.PunctuationType.STREAM_TIME;
 
 /**
- * User: Bill Bejeck
- * Date: 8/12/17
- * Time: 10:54 AM
+ * This class provides the same functionality as the
+ * {@link AggregatingProcessor} but the {@link org.apache.kafka.streams.processor.Punctuator}
+ * is provided via a method handle versus a concrete instance.
  */
 public class AggregatingMethodHandleProcessor extends AbstractProcessor<String, Tuple<ClickEvent,StockTransaction>> {
 
@@ -69,6 +69,7 @@ public class AggregatingMethodHandleProcessor extends AbstractProcessor<String, 
                 tupleStore.put(cogrouping.key, cogrouping.value);
             }
         }
+        iterator.close();
     }
 
 }

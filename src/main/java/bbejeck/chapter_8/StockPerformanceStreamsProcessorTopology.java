@@ -10,6 +10,9 @@ import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 
 /**
@@ -31,13 +34,10 @@ public class StockPerformanceStreamsProcessorTopology {
         String stocksStateStore = "stock-performance-store";
         double differentialThreshold = 0.02;
 
+        KeyValueBytesStoreSupplier storeSupplier = Stores.lruMap(stocksStateStore, 100);
+        StoreBuilder<KeyValueStore<String, StockPerformance>> storeBuilder = Stores.keyValueStoreBuilder(storeSupplier, Serdes.String(), stockPerformanceSerde);
 
-        builder.addStateStore(Stores.create(stocksStateStore)
-                .withStringKeys()
-                .withValues(stockPerformanceSerde)
-                .inMemory()
-                .maxEntries(100)
-                .build());
+        builder.addStateStore(storeBuilder);
 
         builder.stream("stock-transactions", Consumed.with(stringSerde, stockTransactionSerde))
                 .transform(() -> new StockPerformanceTransformer(stocksStateStore, differentialThreshold), stocksStateStore)

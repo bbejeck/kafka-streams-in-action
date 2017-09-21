@@ -130,8 +130,14 @@ dependencies {
     compile group: 'com.h2database', name:'h2', version: '1.4.196'
     compile files('libs/kafka-streams-1.0.0-SNAPSHOT.jar','libs/kafka-clients-1.0.0-SNAPSHOT.jar')
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.3.6'
+    compile (group: 'com.github.javafaker', name: 'javafaker', version: '0.12') {
+        exclude group:'ch.qos.logback'
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
+    
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version:'5.0.0'
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version:'5.0.0'
+    testCompile group:'org.mockito', name:'mockito-core', version:'2.10.0'
 
     testCompile group:'org.hamcrest', name:'hamcrest-junit', version:'2.0.0.0'
 
@@ -144,9 +150,6 @@ dependencies {
     
     testCompile files('libs/kafka-streams-1.0.0-SNAPSHOT-test.jar')
     
-    compile (group: 'com.github.javafaker', name: 'javafaker', version: '0.12') {
-        exclude group:'ch.qos.logback'
-        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-    }
+    
     
 }

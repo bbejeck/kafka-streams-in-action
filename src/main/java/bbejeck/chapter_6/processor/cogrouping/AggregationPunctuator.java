@@ -10,7 +10,6 @@ import org.apache.kafka.streams.processor.Punctuator;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AggregationPunctuator implements Punctuator {
@@ -37,5 +36,6 @@ public class AggregationPunctuator implements Punctuator {
                 tupleStore.put(cogrouping.key, null);
             }
         }
+        iterator.close();
     }
 }

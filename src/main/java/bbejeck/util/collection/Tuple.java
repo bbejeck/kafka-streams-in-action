@@ -16,6 +16,23 @@ public class Tuple<L, R> {
 
   }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Tuple)) return false;
+
+        Tuple<?, ?> tuple = (Tuple<?, ?>) o;
+
+        if (_1 != null ? !_1.equals(tuple._1) : tuple._1 != null) return false;
+        return _2 != null ? _2.equals(tuple._2) : tuple._2 == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = _1 != null ? _1.hashCode() : 0;
+        result = 31 * result + (_2 != null ? _2.hashCode() : 0);
+        return result;
+    }
 
     @Override
     public String toString() {

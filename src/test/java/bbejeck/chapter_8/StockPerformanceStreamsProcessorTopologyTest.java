@@ -5,11 +5,11 @@ import bbejeck.model.StockTransaction;
 import bbejeck.util.datagen.DataGenerator;
 import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.test.ProcessorTopologyTestDriver;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +42,7 @@ public class StockPerformanceStreamsProcessorTopologyTest {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
+
 
         StreamsConfig streamsConfig = new StreamsConfig(props);
 
@@ -76,5 +76,42 @@ public class StockPerformanceStreamsProcessorTopologyTest {
         assertThat(stockPerformance.getCurrentShareVolume(), equalTo(stockTransaction.getShares()));
         assertThat(stockPerformance.getCurrentPrice(), equalTo(stockTransaction.getSharePrice()));
 
+    }
+
+    @Test
+    @DisplayName("Should Trigger Punctate")
+    public void shouldTriggerPunctuate() throws Exception {
+
+        Serde<String> stringSerde = Serdes.String();
+        Serde<StockTransaction> stockTransactionSerde = StreamsSerdes.StockTransactionSerde();
+        Serde<StockPerformance> stockPerformanceSerde = StreamsSerdes.StockPerformanceSerde();
+
+        StockTransaction stockTransaction = DataGenerator.generateStockTransaction();
+        long timestamp = System.currentTimeMillis();
+
+        for (int i = 0; i < 30 ; i++) {
+
+            topologyTestDriver.process("stock-transactions",
+                    stockTransaction.getSymbol(),
+                    stockTransaction,
+                    stringSerde.serializer(),
+                    stockTransactionSerde.serializer(),
+                    timestamp);
+            
+
+            timestamp+=3000;
+            double sharePrice = stockTransaction.getSharePrice();
+            int shareVolume = stockTransaction.getShares();
+            stockTransaction = StockTransaction
+                               .newBuilder(stockTransaction)
+                               .withSharePrice(sharePrice * 1.03)
+                               .withShares(shareVolume + 500).build();
+        }
+
+      ProducerRecord<String, StockPerformance> producerRecord =  topologyTestDriver.readOutput("stock-performance",
+              stringSerde.deserializer(),
+              stockPerformanceSerde.deserializer());
+
+        System.out.println(producerRecord.value());
     }
 }

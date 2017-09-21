@@ -14,6 +14,7 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.test.ProcessorTopologyTestDriver;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
@@ -48,6 +49,7 @@ public class ZMartTopologyTest {
 
 
     @Test
+    @DisplayName("Testing the ZMart Topology Flow")
     public void testZMartTopology() {
 
         Serde<Purchase> purchaseSerde = StreamsSerdes.PurchaseSerde();
