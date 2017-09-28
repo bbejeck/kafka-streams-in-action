@@ -1,8 +1,19 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
+    }
+}
+
+
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'application'
+apply plugin: 'org.junit.platform.gradle.plugin'
 
 group = 'bbejeck'
 version = '1.0-SNAPSHOT'
@@ -128,28 +139,24 @@ dependencies {
     compile group: 'com.sparkjava', name: 'spark-core', version: '2.6.0'
     compile group: 'com.esotericsoftware', name: 'kryo', version: '4.0.0'
     compile group: 'com.h2database', name:'h2', version: '1.4.196'
+    
     compile files('libs/kafka-streams-1.0.0-SNAPSHOT.jar','libs/kafka-clients-1.0.0-SNAPSHOT.jar')
+    
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.3.6'
+    
+
     compile (group: 'com.github.javafaker', name: 'javafaker', version: '0.12') {
         exclude group:'ch.qos.logback'
         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
     }
-    
+
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version:'5.0.0'
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version:'5.0.0'
     testCompile group:'org.mockito', name:'mockito-core', version:'2.10.0'
 
     testCompile group:'org.hamcrest', name:'hamcrest-junit', version:'2.0.0.0'
 
-    //testCompile  group:'org.apache.kafka', name:'kafka-streams', version:'0.11.0.0', classifier:'test'
-    
-    testCompile (group:'org.apache.kafka', name:'kafka-clients', version:'0.11.0.0', classifier:'test') {
-        exclude group:'ch.qos.logback'
-        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-    }
-    
-    testCompile files('libs/kafka-streams-1.0.0-SNAPSHOT-test.jar')
-    
-    
-    
+
+    testCompile group: 'org.scala-lang', name: 'scala-library', version: '2.11.8'
+    testCompile files('libs/kafka-streams-1.0.0-SNAPSHOT-test.jar' ,'libs/kafka-clients-1.0.0-SNAPSHOT-test.jar', 'libs/kafka_2.11-1.0.0-SNAPSHOT-test.jar', 'libs/kafka_2.11-1.0.0-SNAPSHOT.jar')
 }
