@@ -5,7 +5,6 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.common.utils.MockTime;
 import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
@@ -18,11 +17,11 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -36,6 +35,10 @@ public class KafkaStreamsYellingIntegrationTest {
 
     private KafkaStreams kafkaStreams;
     private StreamsConfig streamsConfig;
+    private Properties producerConfig;
+    private Properties consumerConfig;
+
+
     private static final String YELL_A_TOPIC = "yell-A-topic";
     private static final String YELL_B_TOPIC = "yell-B-topic";
     private static final String OUT_TOPIC = "out-topic";
@@ -59,12 +62,21 @@ public class KafkaStreamsYellingIntegrationTest {
                 STRING_SERDE_CLASSNAME,
                 new Properties());
         properties.put(IntegrationTestUtils.INTERNAL_LEAVE_GROUP_ON_CLOSE, true);
-        streamsConfig  = new StreamsConfig(properties);
+        
+        streamsConfig = new StreamsConfig(properties);
+
+        producerConfig = TestUtils.producerConfig(EMBEDDED_KAFKA.bootstrapServers(),
+                StringSerializer.class,
+                StringSerializer.class);
+
+        consumerConfig = TestUtils.consumerConfig(EMBEDDED_KAFKA.bootstrapServers(),
+                StringDeserializer.class,
+                StringDeserializer.class);
     }
 
     @After
     public void tearDown() {
-        if (kafkaStreams!=null){
+        if (kafkaStreams != null) {
             kafkaStreams.close();
         }
     }
@@ -75,43 +87,45 @@ public class KafkaStreamsYellingIntegrationTest {
 
         StreamsBuilder streamsBuilder = new StreamsBuilder();
 
-         streamsBuilder.<String,String>stream(Pattern.compile("yell.*"))
-                 .mapValues(String::toUpperCase)
-                 .to(OUT_TOPIC);
+        streamsBuilder.<String, String>stream(Pattern.compile("yell.*"))
+                .mapValues(String::toUpperCase)
+                .to(OUT_TOPIC);
 
-        kafkaStreams = new KafkaStreams(streamsBuilder.build(),streamsConfig);
+        kafkaStreams = new KafkaStreams(streamsBuilder.build(), streamsConfig);
         kafkaStreams.start();
 
-        final Properties producerConfig = TestUtils.producerConfig(EMBEDDED_KAFKA.bootstrapServers(), StringSerializer.class, StringSerializer.class);
-        final Properties consumerConfig = TestUtils.consumerConfig(EMBEDDED_KAFKA.bootstrapServers(), StringDeserializer.class, StringDeserializer.class);
+        List<String> valuesToSendList = Arrays.asList("this", "should", "yell", "at", "you");
+        List<String> expectedValuesList = valuesToSendList.stream()
+                                                          .map(String::toUpperCase)
+                                                          .collect(Collectors.toList());
 
-        produceValues(YELL_A_TOPIC, Arrays.asList("this","should","yell","at","you"), producerConfig);
-        List<String> expectedReceivedValues = Arrays.asList("THIS", "SHOULD", "YELL", "AT", "YOU");
-        List<String> actualValues = readValues(OUT_TOPIC,5, consumerConfig);
+        IntegrationTestUtils.produceValuesSynchronously(YELL_A_TOPIC,
+                                                        valuesToSendList,
+                                                        producerConfig,
+                                                        mockTime);
+        int expectedNumberOfRecords = 5;
+        List<String> actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
+                                                                                           OUT_TOPIC,
+                                                                                           expectedNumberOfRecords);
 
-        assertThat(actualValues, equalTo(expectedReceivedValues));
+        assertThat(actualValues, equalTo(expectedValuesList));
 
         EMBEDDED_KAFKA.createTopic(YELL_B_TOPIC);
 
-        produceValues(YELL_B_TOPIC, Arrays.asList("yell","at","you","too"), producerConfig);
-        expectedReceivedValues = Arrays.asList("YELL", "AT", "YOU", "TOO");
-        actualValues = readValues(OUT_TOPIC,4, consumerConfig);
+        valuesToSendList = Arrays.asList("yell", "at", "you", "too");
+        IntegrationTestUtils.produceValuesSynchronously(YELL_B_TOPIC,
+                                                        valuesToSendList,
+                                                        producerConfig,
+                                                        mockTime);
 
-        assertThat(actualValues, equalTo(expectedReceivedValues));
+        expectedValuesList = valuesToSendList.stream().map(String::toUpperCase).collect(Collectors.toList());
 
-    }
+        expectedNumberOfRecords = 4;
+        actualValues = IntegrationTestUtils.waitUntilMinValuesRecordsReceived(consumerConfig,
+                                                                              OUT_TOPIC,
+                                                                              expectedNumberOfRecords);
 
-    private void produceValues(String topic, List<String> toSend, Properties producerConfig) throws  Exception {
-        IntegrationTestUtils.produceValuesSynchronously(topic, toSend, producerConfig, mockTime);
-    }
+        assertThat(actualValues, equalTo(expectedValuesList));
 
-    private List<String> readValues(String topic, int expectedSize, Properties consumerConfig) throws Exception {
-        List<KeyValue<String, String>> receivedKeyValues = IntegrationTestUtils.waitUntilMinKeyValueRecordsReceived(consumerConfig, topic, expectedSize);
-        List<String> actualValues = new ArrayList<>(expectedSize);
-
-        for (final KeyValue<String, String> receivedKeyValue : receivedKeyValues) {
-            actualValues.add(receivedKeyValue.value);
-        }
-        return actualValues;
     }
 }
