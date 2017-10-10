@@ -36,7 +36,8 @@ import org.apache.kafka.streams.kstream.ForeachAction;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Properties;
@@ -45,7 +46,7 @@ import java.util.concurrent.CountDownLatch;
 
     public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
 
-    private static final Logger LOG = Logger.getLogger(ZMartKafkaStreamsAdvancedReqsMetricsApp.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZMartKafkaStreamsAdvancedReqsMetricsApp.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -119,7 +120,7 @@ import java.util.concurrent.CountDownLatch;
         KafkaStreams.StateListener stateListener = (newState, oldState) -> {
             if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
                 LOG.info("Application has gone from REBALANCING to RUNNING ");
-                LOG.info(kafkaStreams.toString());
+                LOG.info("Topology structure {}", kafkaStreams.localThreadsMetadata());
             }
 
             if (newState == KafkaStreams.State.REBALANCING) {
