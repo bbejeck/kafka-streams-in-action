@@ -7,9 +7,6 @@ buildscript {
     }
 }
 
-plugins {
-    id "com.commercehub.gradle.plugin.avro" version "0.9.0"
-}
 
 apply plugin: 'java'
 apply plugin: 'maven'
@@ -114,7 +111,6 @@ jar {
 }
 
 repositories {
-     jcenter()
      mavenCentral()
 }
 
@@ -143,9 +139,8 @@ dependencies {
     compile group: 'com.esotericsoftware', name: 'kryo', version: '4.0.0'
     compile group: 'com.h2database', name:'h2', version: '1.4.196'
     compile group: 'org.apache.kafka', name: 'connect-api', version: '0.11.0.1'
-    compile group: 'org.apache.avro', name: 'avro', version:'1.8.2'
    
-    compile files('libs/kafka-streams-1.0.0-SNAPSHOT.jar','libs/kafka-clients-1.0.0-SNAPSHOT.jar', 'libs/kafka-streams-avro-serde-3.3.1-SNAPSHOT.jar', 'libs/kafka-avro-serializer-3.3.1-SNAPSHOT.jar')
+    compile files('libs/kafka-streams-1.0.0-SNAPSHOT.jar','libs/kafka-clients-1.0.0-SNAPSHOT.jar')
     
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.3.6'
     
