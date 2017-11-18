@@ -120,7 +120,7 @@ import java.util.concurrent.CountDownLatch;
         KafkaStreams.StateListener stateListener = (newState, oldState) -> {
             if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
                 LOG.info("Application has gone from REBALANCING to RUNNING ");
-                LOG.info("Topology structure {}", kafkaStreams.localThreadsMetadata());
+                LOG.info("Topology Layout {}", streamsBuilder.build().describe());
             }
 
             if (newState == KafkaStreams.State.REBALANCING) {
