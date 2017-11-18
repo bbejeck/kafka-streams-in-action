@@ -79,7 +79,7 @@ public class CoGroupingListeningExampleApplication {
 
         kafkaStreams.setStateListener((newState, oldState) -> {
            if (oldState == KafkaStreams.State.REBALANCING && newState== KafkaStreams.State.RUNNING) {
-               LOG.info(kafkaStreams.toString());
+               LOG.info("Topology Layout {}", topology.describe());
            }
         });
 
