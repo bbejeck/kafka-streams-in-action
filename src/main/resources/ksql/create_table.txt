@@ -1,0 +1,4 @@
+CREATE TABLE stock_txn_table (symbol VARCHAR, sector VARCHAR, \
+	                                  industry VARCHAR, shares BIGINT, sharePrice DOUBLE, \
+	                                  customerId VARCHAR, transactionTimestamp STRING, purchase BOOLEAN) \
+	                                  WITH (VALUE_FORMAT = 'JSON', KAFKA_TOPIC = 'stock-transactions');

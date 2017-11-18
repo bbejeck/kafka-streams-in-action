@@ -26,10 +26,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 
-import static bbejeck.util.datagen.DataGenerator.NUMBER_TRADED_COMPANIES;
-import static bbejeck.util.datagen.DataGenerator.NUMBER_UNIQUE_CUSTOMERS;
-import static bbejeck.util.datagen.DataGenerator.NUM_ITERATIONS;
-import static bbejeck.util.Topics.*;
+import static bbejeck.util.Topics.CLIENTS;
+import static bbejeck.util.Topics.COMPANIES;
+import static bbejeck.util.datagen.DataGenerator.*;
 
 /**
  * Class will produce 100 Purchase records per iteration
@@ -52,6 +51,7 @@ public class MockDataProducer {
     public static final String CO_GROUPED_RESULTS = "cogrouped-results";
     private static final String YELLING_APP_TOPIC = "src-topic";
     private static final int YELLING_APP_ITERATIONS = 5;
+    private static volatile boolean keepRunning = true;
 
 
     public static void producePurchaseData() {
@@ -62,7 +62,7 @@ public class MockDataProducer {
         Runnable generateTask = () -> {
             init();
             int counter = 0;
-            while (counter++ < numberIterations) {
+            while (counter++ < numberIterations  && keepRunning) {
                 List<Purchase> purchases = DataGenerator.generatePurchases(numberPurchases, numberCustomers);
                 List<String> jsonValues = convertToJson(purchases);
                 for (String value : jsonValues) {
@@ -83,7 +83,7 @@ public class MockDataProducer {
     }
 
     public static void produceStockTransactions(int numberIterations) {
-        producePurchaseData(numberIterations, NUMBER_TRADED_COMPANIES, NUMBER_UNIQUE_CUSTOMERS);
+        produceStockTransactions(numberIterations, NUMBER_TRADED_COMPANIES, NUMBER_UNIQUE_CUSTOMERS, false);
     }
 
     public static void produceNewsAndStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers) {
@@ -95,7 +95,7 @@ public class MockDataProducer {
         Runnable produceBeerSales = () -> {
             init();
             int counter = 0;
-            while (counter++ < numberIterations) {
+            while (counter++ < numberIterations && keepRunning) {
                 List<BeerPurchase> beerPurchases = DataGenerator.generateBeerPurchases( 50);
                 List<String> jsonTransactions = convertToJson(beerPurchases);
                 for (String jsonTransaction : jsonTransactions) {
@@ -129,7 +129,7 @@ public class MockDataProducer {
         Runnable produceStockTransactionsTask = () -> {
             init();
             int counter = 0;
-            while (counter++ < numberIterations) {
+            while (counter++ < numberIterations && keepRunning) {
                 List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, 50);
                 List<String> jsonTransactions = convertToJson(transactions);
                 for (String jsonTransaction : jsonTransactions) {
@@ -171,7 +171,7 @@ public class MockDataProducer {
 
             LOG.info("Financial news sent");
             counter = 0;
-            while (counter++ < numberIterations) {
+            while (counter++ < numberIterations && keepRunning) {
                 List<StockTransaction> transactions = DataGenerator.generateStockTransactions(customers, companies, 50);
                 for (StockTransaction transaction : transactions) {
                     String jsonTransaction = convertToJson(transaction);
@@ -202,7 +202,7 @@ public class MockDataProducer {
 
 
             int counter = 0;
-            while (counter++ < numberIterations) {
+            while (counter++ < numberIterations && keepRunning) {
 
                 for (ClickEvent clickEvent : clickEvents) {
                     String jsonEvent = convertToJson(clickEvent);
@@ -284,7 +284,7 @@ public class MockDataProducer {
             int counter = 0;
             List<PublicTradedCompany> publicTradedCompanyList = DataGenerator.stockTicker(numberCompanies);
 
-            while (counter++ < numberIterations) {
+            while (counter++ < numberIterations && keepRunning) {
                 for (PublicTradedCompany company : publicTradedCompanyList) {
                     String value = convertToJson(new StockTickerData(company.getPrice(), company.getSymbol()));
 
@@ -344,6 +344,7 @@ public class MockDataProducer {
 
     public static void shutdown() {
         LOG.info("Shutting down data generation");
+        keepRunning = false;
 
         if (executorService != null) {
             executorService.shutdownNow();
