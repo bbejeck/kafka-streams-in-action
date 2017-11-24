@@ -146,8 +146,6 @@ dependencies {
 
     compile group: 'org.apache.kafka', name: 'connect-api', version: '1.0.0'
 
-    compile files('libs/kafka-streams-1.0.0-SNAPSHOT.jar','libs/kafka-clients-1.0.0-SNAPSHOT.jar')
-
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.3.6'
     
 
