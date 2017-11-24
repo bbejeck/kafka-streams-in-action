@@ -1,0 +1,1 @@
+SELECT symbol, sum(shares) FROM stock_txn_stream WINDOW TUMBLING (SIZE 10 SECONDS) GROUP BY symbol;
