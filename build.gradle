@@ -139,8 +139,9 @@ dependencies {
     compile group: 'com.sparkjava', name: 'spark-core', version: '2.6.0'
     compile group: 'com.esotericsoftware', name: 'kryo', version: '4.0.0'
     compile group: 'com.h2database', name:'h2', version: '1.4.196'
+    compile group: 'org.apache.kafka', name:'kafka-streams', version: '1.0.0'
+    compile group: 'org.apache.kafka', name:'kafka-clients', version: '1.0.0'
     
-    compile files('libs/kafka-streams-1.0.0-SNAPSHOT.jar','libs/kafka-clients-1.0.0-SNAPSHOT.jar')
     
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.3.6'
     
@@ -155,8 +156,18 @@ dependencies {
     testCompile group:'org.mockito', name:'mockito-core', version:'2.10.0'
 
     testCompile group:'org.hamcrest', name:'hamcrest-junit', version:'2.0.0.0'
+    
+    testCompile group:'org.apache.kafka', name:'kafka-streams', version:'1.0.0', classifier: 'test'
+    testCompile group:'org.apache.kafka', name:'kafka-clients', version:'1.0.0', classifier: 'test'
+    
+    testCompile (group:'org.apache.kafka', name:'kafka_2.12', version:'1.0.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
 
+    testCompile (group:'org.apache.kafka', name:'kafka_2.12', version:'1.0.0', classifier: 'test') {
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
 
-    testCompile group: 'org.scala-lang', name: 'scala-library', version: '2.11.8'
-    testCompile files('libs/kafka-streams-1.0.0-SNAPSHOT-test.jar' ,'libs/kafka-clients-1.0.0-SNAPSHOT-test.jar', 'libs/kafka_2.11-1.0.0-SNAPSHOT-test.jar', 'libs/kafka_2.11-1.0.0-SNAPSHOT.jar')
+    testCompile group: 'org.scala-lang', name: 'scala-library-all', version: '2.12.4'
+    
 }

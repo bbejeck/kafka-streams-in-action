@@ -3,7 +3,7 @@ package bbejeck.chapter_3;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.common.utils.MockTime;
+import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
@@ -31,7 +31,7 @@ public class KafkaStreamsYellingIntegrationTest {
 
     private static final int NUM_BROKERS = 1;
     private static final String STRING_SERDE_CLASSNAME = Serdes.String().getClass().getName();
-    private final MockTime mockTime = new MockTime();
+    private final Time mockTime = Time.SYSTEM;
 
     private KafkaStreams kafkaStreams;
     private StreamsConfig streamsConfig;
