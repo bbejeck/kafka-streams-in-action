@@ -9,13 +9,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public class ZMartProducerInterceptor implements ProducerInterceptor<String, Object> {
+public class ZMartProducerInterceptor implements ProducerInterceptor<Object, Object> {
 
 
     private static final Logger LOG = LoggerFactory.getLogger(ZMartProducerInterceptor.class);
 
     @Override
-    public ProducerRecord<String, Object> onSend(ProducerRecord<String, Object> record) {
+    public ProducerRecord<Object, Object> onSend(ProducerRecord<Object, Object> record) {
 
         LOG.info("ProducerRecord being sent out {} ", record);
 
