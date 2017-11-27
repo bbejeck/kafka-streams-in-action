@@ -106,6 +106,16 @@ task runZmartJmxAndProducerInterecptor_Chapter_7(type: JavaExec) {
     main = "bbejeck.chapter_7.ZMartKafkaStreamsAdvancedReqsMetricsApp"
 }
 
+task runDatabaseInserts(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.util.db.DBServer"
+}
+
+task runStreamsConnectIntegration_Chapter_9(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_9.StockCountsStreamsConnectIntegrationApplication"
+}
+
 
 jar {
   archiveName='bbejeck-kafka-streams-in-action-1.0-SNAPSHOT.jar'

@@ -1,33 +1,54 @@
 ### Source Code for Kafka Streams in Action
 
-#### Chapter 7 updates
+#### Chapter 9 updates
 
-1. Very exciting times for Kafka and Kafka Streams! We are headed towards a 1.0 release in October.
-2. As result we're back to using snapshot versions until the final release in October.
-3. Lots of things have been updated in Kafka Streams, including some deprecations. Chapter 6 an 7 have been updated to use
-  the latest API.  Eventually all of the code will get transitioned to the latest API but it will take a little time, so there
+1. Kafka and Kafka Streams are now at version 1.0!
+2. With the official release of 1.0, I've been able to remove the kafka-streams and kafka-clients jar files from the project and the related test jar
+files as well.
+3. Since this chapter is all about testing, all examples run as tests from within your IDE, although if you want you can run tests from the command line
+via a `./gradlew clean test` command.
+4. All unit tests use JUnit 5.0, so it's good opportunity to learn the changes that have come with the new version.
+5. As before, chapter 6 forward uses the new Kafka Streams 1.0 API, chapters 3-5 will get updated before publication to the new API.
 may still be some use of deprecated classes and methods here and there.
-4. Logging as been added to the application and there is now a logs directory with logs for the application and various examples. Eventually the all code in the project
+6. Logging as been added to the application and there is now a logs directory with logs for the application and various examples. Eventually the all code in the project
 will get migrated to logging vs sysout.
 
+#### Instructions for Chapter 9 Examples
 
-#### Updates
+The examples in Chapter 9 are more involved and require some extra steps to run.  The first example we'll go over
+is the Kafka-Connect and Kafka Streams integration.
+
+##### Kafka-Connect & Kafka Streams Example
+To run the Kafka Connect and Kafka Streams example you'll need to do the following:
+1. Update the `plugin-path` property in the `connect-standalone.properties` file to the path where you cloned this repository.  The `plugin-path` property
+contains the path to the upber-jar file with the Confluent JDBC connector and the H2 database classes.  Make sure just to update the base location of where
+you installed the source code, but leave the rest of the path in place.
+2. Copy both the `connector-jdbc.properites` and `connect-standalone.properties` files to the `<kafka install dir>/config` directory.
+3. Open a terminal window and cd into the base directory of the source code, the run `./gradlew runDatabaseInserts` this will start the H2 database servers and start
+inserting data into a table that Kafka-Connect monitors.
+4. In another terminal window cd into `<kafka install dir>/bin` and run `./connect-standalone.sh ../config/connect-standalone.properties ../config/connector-jdbc.properties` this will start
+Kafka Connect and it will start pulling data from the database table into Kafka.
+5. Open a third terminal window from the base of the source code install and run `./gradlew runStreamsConnectIntegration_Chapter_9` and this will start the Kafka Streams 
+application that will start stream processing data from a database table via Connect!
+
+For this example to work properly you must start the database server/insert process before starting Kafka-Connect.
+
+To clean up or start the example over remove the Connect offsets (stored in the file `/tmp/connect.offsets` by default) and remove the H2 database file
+file (`findata.mv.db`) stored in your home directory.
+
+#### Previous Updates
 
 Here are some notes regarding the source code:
 
-1. For the examples in Chapters 5 and 6 since they rely more on timestamps and potential joins, sometimes it takes a few seconds for
+1. Chapter 7 examples are concerned with observing performance so at least one of the examples will continue to run until you explicitly stop the program
+from running.  Most of the related results are found in log files or viewed JMX.
+
+2. For the examples in Chapters 5 and 6 since they rely more on timestamps and potential joins, sometimes it takes a few seconds for
 data to show up.  Additionally random data is generated for each run of an example
 so example runs produce better data than others.  Please be patient.
 
-2. If at first you don't get any results, re-run the example.  It could be a I missed adding a topic name to the create-topics.sh script and the topic does not
+3. If at first you don't get any results, re-run the example.  It could be a I missed adding a topic name to the create-topics.sh script and the topic does not
 exist yet, but Kafka is configured to create topics automatically.
-
-3. I will be updating this file with a "road map" of where in the book maps to
-which examples.
-
-4. There are some exciting new features coming in the 1.0.0 release of Kafka and Kafka Streams coming in October stay tuned
-as this code base will evolve. 
-
 
 
 #### Requirements
@@ -41,14 +62,10 @@ the first time you run the ./gradlew or gradlew command gradle will be installed
 
 #### Included Dependencies
 
-1. kafka-streams-1.0.0-SNAPSHOT.jar
-2. kafka-clients-1.0.0-SNAPSHOT.jar 
-3. kafka_2.12-1.0.0-SNAPSHOT.tgz
+1. kafka_2.12-1.0.0.tgz
 
 
-Since the book is targeting the Kafka 1.0 release, I'm back to including the 
-snapshot versions of Kafka-Streams and Kafka-Clients
-Kafka itself (version 2.12-1.0.0-SNAPSHOT) is included as a convenience. 
+Kafka itself (version 2.12-1.0.0) is included as a convenience. 
 
 All other dependencies are taken care of via gradle.
  
@@ -59,22 +76,22 @@ The gradle eclipse and intellij plugins are included in the build.gradle file.
 2. To set up for intellij run ./gradlew idea (for windows gradlew idea) from the base directory of this repo.
 
 #### Installing the included Kafka
-Run tar xvzf  2.12-1.0.0-SNAPSHOT.tgz some where on your computer.
+Run tar xvzf  kafka_2.12-1.0.0.tgz some where on your computer.
 
 #### Running Kafka
-1. To start kafka go to <install dir>/2.12-1.0.0-SNAPSHOT/bin
+1. To start kafka go to <install dir>/kafka_2.12-1.0.0/bin
 2. Run zookeeper-server-start.sh
 3. Run kafka-server-start.sh
 
-If you are on windows, go to the <install dir>/2.12-1.0.0-SNAPSHOT/bin/windows directory
+If you are on windows, go to the <install dir>/kafka_2.12-1.0.0/bin/windows directory
 and run the .bat files with the same name and in the same order.
  
 #### Stopping Kafka
-1. To start kafka go to <install dir>/2.12-1.0.0-SNAPSHOT/bin
+1. To start kafka go to <install dir>/kafka_2.12-1.0.0/bin
 2. Run kafka-server-stop.sh
 3. Run zookeeper-server-stop.sh
 
-If you are on windows, go to the <install dir>/2.12-1.0.0-SNAPSHOT/bin/windows directory
+If you are on windows, go to the <install dir>/kafka_2.12-1.0.0/bin/windows directory
 and run the .bat files with the same name and in the same order.
 
 #### Sample Kafka Streams Code
