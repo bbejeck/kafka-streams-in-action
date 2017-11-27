@@ -51,7 +51,7 @@ public class StockCountsStreamsConnectIntegrationApplication {
 
         Runtime.getRuntime().addShutdownHook(new Thread(()-> {
             doneSignal.countDown();
-            System.out.println("Shutting down the Stock Analysis KStream Connect App Started now");
+            LOG.info("Shutting down the Stock Analysis KStream Connect App Started now");
             kafkaStreams.close();
         }));
 
