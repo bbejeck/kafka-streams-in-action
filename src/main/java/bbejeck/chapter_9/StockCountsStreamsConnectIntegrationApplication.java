@@ -40,7 +40,7 @@ public class StockCountsStreamsConnectIntegrationApplication {
         builder.stream("dbTxnTRANSACTIONS",  Consumed.with(stringSerde, stockTransactionSerde))
                       .peek((k, v)-> LOG.info("transactions from database key {} value {}",k, v))
                       .groupByKey(Serialized.with(stringSerde, stockTransactionSerde))
-                      .aggregate(()-> 0L,(symb, stockTxn, numShares) -> numShares + (long)stockTxn.getShares(),
+                      .aggregate(()-> 0L,(symb, stockTxn, numShares) -> numShares + stockTxn.getShares(),
                               Materialized.with(stringSerde, longSerde)).toStream()
                              .peek((k,v) -> LOG.info("Aggregated stock sales for {} {}",k, v))
                              .to( "stock-counts", Produced.with(stringSerde, longSerde));
