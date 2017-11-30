@@ -2,14 +2,15 @@ package bbejeck.util.serde;
 
 import bbejeck.collectors.FixedSizePriorityQueue;
 import bbejeck.model.ClickEvent;
-import bbejeck.model.StockPerformance;
-import bbejeck.model.TransactionSummary;
-import bbejeck.model.ShareVolume;
+import bbejeck.model.CustomerTransactions;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
 import bbejeck.model.RewardAccumulator;
+import bbejeck.model.ShareVolume;
+import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTickerData;
 import bbejeck.model.StockTransaction;
+import bbejeck.model.TransactionSummary;
 import bbejeck.util.collection.Tuple;
 import bbejeck.util.serializer.JsonDeserializer;
 import bbejeck.util.serializer.JsonSerializer;
@@ -61,6 +62,10 @@ public class StreamsSerdes {
         return new StockPerformanceSerde();
     }
 
+    public static Serde<CustomerTransactions> CustomerTransactionsSerde() {
+        return new CustomerTransactionsSerde();
+    }
+
     public static Serde<Tuple<List<ClickEvent>, List<StockTransaction>>> EventTransactionTupleSerde() {
         return new EventTransactionTupleSerde();
     }
@@ -105,6 +110,13 @@ public class StreamsSerdes {
         public StockTransactionSerde(){
             super(new JsonSerializer<>(), new JsonDeserializer<>(StockTransaction.class));
         }
+    }
+
+    public static final class CustomerTransactionsSerde extends WrapperSerde<CustomerTransactions> {
+         public CustomerTransactionsSerde() {
+             super(new JsonSerializer<>(), new JsonDeserializer<>(CustomerTransactions.class));
+         }
+
     }
 
     public static final class FixedSizePriorityQueueSerde extends WrapperSerde<FixedSizePriorityQueue> {

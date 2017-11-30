@@ -1,8 +1,8 @@
 package bbejeck.webserver;
 
 
+import bbejeck.model.CustomerTransactions;
 import bbejeck.model.StockPerformance;
-import bbejeck.model.StockTransaction;
 import com.google.gson.Gson;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
@@ -90,9 +90,9 @@ public class InteractiveQueryServer {
             return fetchRemote(storeHostInfo,"session", params);
         }
 
-        ReadOnlySessionStore<String, StockTransaction> readOnlySessionStore = kafkaStreams.store(store,QueryableStoreTypes.sessionStore());
-        List<StockTransaction> results = new ArrayList<>();
-        try(KeyValueIterator<Windowed<String>, StockTransaction> iterator = readOnlySessionStore.fetch(key)){
+        ReadOnlySessionStore<String, CustomerTransactions> readOnlySessionStore = kafkaStreams.store(store,QueryableStoreTypes.sessionStore());
+        List<CustomerTransactions> results = new ArrayList<>();
+        try(KeyValueIterator<Windowed<String>, CustomerTransactions> iterator = readOnlySessionStore.fetch(key)){
             while(iterator.hasNext()) {
                 results.add(iterator.next().value);
             }

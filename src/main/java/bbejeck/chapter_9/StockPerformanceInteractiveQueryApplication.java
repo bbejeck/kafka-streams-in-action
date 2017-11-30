@@ -2,6 +2,7 @@ package bbejeck.chapter_9;
 
 
 import bbejeck.clients.producer.MockDataProducer;
+import bbejeck.model.CustomerTransactions;
 import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTransaction;
 import bbejeck.util.serde.StreamsSerdes;
@@ -12,25 +13,31 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Aggregator;
+import org.apache.kafka.streams.kstream.KGroupedStream;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Serialized;
+import org.apache.kafka.streams.kstream.SessionWindows;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
 import org.apache.kafka.streams.kstream.internals.WindowedSerializer;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.HostInfo;
+import org.apache.kafka.streams.state.SessionStore;
 import org.apache.kafka.streams.state.WindowStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 public class StockPerformanceInteractiveQueryApplication {
 
@@ -57,6 +64,7 @@ public class StockPerformanceInteractiveQueryApplication {
         WindowedSerializer<String> windowedSerializer = new WindowedSerializer<>(stringSerde.serializer());
         WindowedDeserializer<String> windowedDeserializer = new WindowedDeserializer<>(stringSerde.deserializer());
         Serde<Windowed<String>> windowedSerde = Serdes.serdeFrom(windowedSerializer, windowedDeserializer);
+        Serde<CustomerTransactions> customerTransactionsSerde = StreamsSerdes.CustomerTransactionsSerde();
 
 
         StreamsBuilder builder = new StreamsBuilder();
@@ -67,8 +75,22 @@ public class StockPerformanceInteractiveQueryApplication {
 
         Aggregator<String, StockTransaction, Integer> sharesAggregator = (k, v, i) -> v.getShares() + i;
 
-        stockTransactionKStream.groupByKey()
-                .windowedBy(TimeWindows.of(10000))
+        KGroupedStream<String, StockTransaction> transactionKGroupedStream = stockTransactionKStream.groupByKey(Serialized.with(stringSerde, stockTransactionSerde));
+
+        KGroupedStream<String, StockTransaction> customerIdTransactions = stockTransactionKStream.map((k,v) -> KeyValue.pair(v.getCustomerId(), v))
+                .through("customer-repartition").groupByKey(Serialized.with(stringSerde, stockTransactionSerde));
+
+        customerIdTransactions.windowedBy(SessionWindows.with(TimeUnit.MINUTES.toMillis(5)))
+                .aggregate(CustomerTransactions::new,(k, v, ct) -> ct.update(v),
+                        (k, ct, other)-> ct.merge(other),
+                        Materialized.<String, CustomerTransactions, SessionStore<Bytes, byte[]>>as("CustomerPurchaseSessions")
+                                .withKeySerde(stringSerde).withValueSerde(customerTransactionsSerde))
+                .toStream()
+                .peek((k,v) -> LOG.info("Session info for {} {}", k, v))
+                .to("session-transactions", Produced.with(windowedSerde, customerTransactionsSerde));
+
+
+        transactionKGroupedStream.windowedBy(TimeWindows.of(10000))
                 .aggregate(() -> 0, sharesAggregator,
                         Materialized.<String, Integer, WindowStore<Bytes, byte[]>>as("NumberSharesPerPeriod")
                                 .withKeySerde(stringSerde)
