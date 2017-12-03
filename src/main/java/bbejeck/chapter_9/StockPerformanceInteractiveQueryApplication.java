@@ -1,6 +1,7 @@
 package bbejeck.chapter_9;
 
 
+import bbejeck.chapter_9.restore.StateRestoreHttpReporter;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.CustomerTransactions;
 import bbejeck.model.StockPerformance;
@@ -18,7 +19,6 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Aggregator;
-import org.apache.kafka.streams.kstream.KGroupedStream;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
@@ -59,6 +59,7 @@ public class StockPerformanceInteractiveQueryApplication {
 
         StreamsConfig streamsConfig = new StreamsConfig(properties);
         Serde<String> stringSerde = Serdes.String();
+        Serde<Long> longSerde = Serdes.Long();
         Serde<StockPerformance> stockPerformanceSerde = StreamsSerdes.StockPerformanceSerde();
         Serde<StockTransaction> stockTransactionSerde = StreamsSerdes.StockTransactionSerde();
         WindowedSerializer<String> windowedSerializer = new WindowedSerializer<>(stringSerde.serializer());
@@ -66,21 +67,25 @@ public class StockPerformanceInteractiveQueryApplication {
         Serde<Windowed<String>> windowedSerde = Serdes.serdeFrom(windowedSerializer, windowedDeserializer);
         Serde<CustomerTransactions> customerTransactionsSerde = StreamsSerdes.CustomerTransactionsSerde();
 
+        Aggregator<String, StockTransaction, Integer> sharesAggregator = (k, v, i) -> v.getShares() + i;
 
         StreamsBuilder builder = new StreamsBuilder();
 
-
+        // data is already coming in keyed
         KStream<String, StockTransaction> stockTransactionKStream = builder.stream(MockDataProducer.STOCK_TRANSACTIONS_TOPIC, Consumed.with(stringSerde, stockTransactionSerde)
                 .withOffsetResetPolicy(Topology.AutoOffsetReset.LATEST));
 
-        Aggregator<String, StockTransaction, Integer> sharesAggregator = (k, v, i) -> v.getShares() + i;
 
-        KGroupedStream<String, StockTransaction> transactionKGroupedStream = stockTransactionKStream.groupByKey(Serialized.with(stringSerde, stockTransactionSerde));
-
-        KGroupedStream<String, StockTransaction> customerIdTransactions = stockTransactionKStream.map((k,v) -> KeyValue.pair(v.getCustomerId(), v))
-                .through("customer-repartition").groupByKey(Serialized.with(stringSerde, stockTransactionSerde));
-
-        customerIdTransactions.windowedBy(SessionWindows.with(TimeUnit.MINUTES.toMillis(5)))
+        stockTransactionKStream.map((k,v) -> KeyValue.pair(v.getSector(), v))
+                .groupByKey(Serialized.with(stringSerde, stockTransactionSerde))
+                .count(Materialized.as("TransactionsBySector"))
+                .toStream()
+                .peek((k,v) -> LOG.info("Transaction count for {} {}", k, v))
+                .to("sector-transaction-counts", Produced.with(stringSerde, longSerde));
+        
+        stockTransactionKStream.map((k,v) -> KeyValue.pair(v.getCustomerId(), v))
+                .groupByKey(Serialized.with(stringSerde, stockTransactionSerde))
+                .windowedBy(SessionWindows.with(TimeUnit.MINUTES.toMillis(5)))
                 .aggregate(CustomerTransactions::new,(k, v, ct) -> ct.update(v),
                         (k, ct, other)-> ct.merge(other),
                         Materialized.<String, CustomerTransactions, SessionStore<Bytes, byte[]>>as("CustomerPurchaseSessions")
@@ -90,7 +95,8 @@ public class StockPerformanceInteractiveQueryApplication {
                 .to("session-transactions", Produced.with(windowedSerde, customerTransactionsSerde));
 
 
-        transactionKGroupedStream.windowedBy(TimeWindows.of(10000))
+        stockTransactionKStream.groupByKey(Serialized.with(stringSerde, stockTransactionSerde))
+                .windowedBy(TimeWindows.of(10000))
                 .aggregate(() -> 0, sharesAggregator,
                         Materialized.<String, Integer, WindowStore<Bytes, byte[]>>as("NumberSharesPerPeriod")
                                 .withKeySerde(stringSerde)
@@ -101,7 +107,11 @@ public class StockPerformanceInteractiveQueryApplication {
 
         KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfig);
         InteractiveQueryServer queryServer = new InteractiveQueryServer(kafkaStreams, hostInfo);
+        StateRestoreHttpReporter restoreReporter = new StateRestoreHttpReporter(queryServer);
+
         queryServer.init();
+
+        kafkaStreams.setGlobalStateRestoreListener(restoreReporter);
 
         kafkaStreams.setStateListener(((newState, oldState) -> {
             if (newState == KafkaStreams.State.RUNNING && oldState == KafkaStreams.State.REBALANCING) {
@@ -123,6 +133,7 @@ public class StockPerformanceInteractiveQueryApplication {
             shutdown(kafkaStreams, queryServer);
         }));
 
+        //TODO need to make a special method for interactive queries to serve up the same canned data for running queries
         MockDataProducer.produceStockTransactionsWithKeyFunction(200000,50, 25, StockTransaction::getSymbol);
         queryServer.init();
         LOG.info("Stock Analysis KStream Interactive Query App Started");
@@ -145,7 +156,8 @@ public class StockPerformanceInteractiveQueryApplication {
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-        props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, "localhost:4000");
+        props.put(StreamsConfig.topicPrefix("retention.bytes"), 1024 * 1024);
+        props.put(StreamsConfig.topicPrefix("retention.ms"), 3600000);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
