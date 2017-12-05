@@ -86,7 +86,7 @@ public class InteractiveQueryServer {
         }
         
         if(dataNotLocal(storeHostInfo)){
-            LOG.info("{} located in state store on another instance", key);
+            LOG.info("{} located in state store on another instance !!!!", key);
             return fetchRemote(storeHostInfo,"session", params);
         }
 

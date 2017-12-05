@@ -4,7 +4,6 @@ package bbejeck.chapter_9;
 import bbejeck.chapter_9.restore.StateRestoreHttpReporter;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.CustomerTransactions;
-import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTransaction;
 import bbejeck.util.serde.StreamsSerdes;
 import bbejeck.webserver.InteractiveQueryServer;
@@ -46,13 +45,14 @@ public class StockPerformanceInteractiveQueryApplication {
     public static void main(String[] args) throws Exception {
 
         if(args.length < 2){
-            LOG.error("Need to specify host and port");
+            LOG.error("Need to specify host, port and producer flag ");
             System.exit(1);
         }
 
         String host = args[0];
         int port = Integer.parseInt(args[1]);
         final HostInfo hostInfo = new HostInfo(host, port);
+        boolean shouldProduce = args.length > 2;
 
         Properties properties = getProperties();
         properties.put(StreamsConfig.APPLICATION_SERVER_CONFIG, host+":"+port);
@@ -60,7 +60,6 @@ public class StockPerformanceInteractiveQueryApplication {
         StreamsConfig streamsConfig = new StreamsConfig(properties);
         Serde<String> stringSerde = Serdes.String();
         Serde<Long> longSerde = Serdes.Long();
-        Serde<StockPerformance> stockPerformanceSerde = StreamsSerdes.StockPerformanceSerde();
         Serde<StockTransaction> stockTransactionSerde = StreamsSerdes.StockTransactionSerde();
         WindowedSerializer<String> windowedSerializer = new WindowedSerializer<>(stringSerde.serializer());
         WindowedDeserializer<String> windowedDeserializer = new WindowedDeserializer<>(stringSerde.deserializer());
@@ -133,9 +132,12 @@ public class StockPerformanceInteractiveQueryApplication {
             shutdown(kafkaStreams, queryServer);
         }));
 
-        //TODO need to make a special method for interactive queries to serve up the same canned data for running queries
-        MockDataProducer.produceStockTransactionsWithKeyFunction(200000,50, 25, StockTransaction::getSymbol);
-        queryServer.init();
+        if(shouldProduce) {
+            MockDataProducer.produceStockTransactionsForIQ(200000);
+            LOG.info("This instance is producing data");
+        } else {
+            LOG.info("Data is already being produced");
+        }
         LOG.info("Stock Analysis KStream Interactive Query App Started");
         kafkaStreams.cleanUp();
         kafkaStreams.start();

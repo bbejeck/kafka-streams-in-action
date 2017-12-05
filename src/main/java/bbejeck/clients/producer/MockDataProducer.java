@@ -52,6 +52,7 @@ public class MockDataProducer {
     private static final String YELLING_APP_TOPIC = "src-topic";
     private static final int YELLING_APP_ITERATIONS = 5;
     private static volatile boolean keepRunning = true;
+    private static volatile boolean producingIQData = false;
 
 
     public static void producePurchaseData() {
@@ -148,8 +149,31 @@ public class MockDataProducer {
 
         };
         executorService.submit(produceStockTransactionsTask);
+    }
 
+    public static void produceStockTransactionsForIQ(int numberIterations) {
+        Runnable transactionsForIQ = () -> {
+            int counter = 0;
+            init();
+            while (counter++ < numberIterations && keepRunning) {
+                List<StockTransaction> transactions = DataGenerator.generateStockTransactionsForIQ(100);
+                for (StockTransaction transaction : transactions) {
+                    String jsonTransaction = convertToJson(transaction);
+                    ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TRANSACTIONS_TOPIC, transaction.getSymbol(), jsonTransaction);
+                    producer.send(record, callback);
+                }
+                LOG.info("Stock Transactions for IQ Sent");
 
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    Thread.interrupted();
+                }
+
+              LOG.info("Done generating transactions for IQ");
+            }
+        };
+        executorService.submit(transactionsForIQ);
     }
 
     public static void produceStockTransactionsWithKeyFunction(int numberIterations, int numberTradedCompanies, int numberCustomers, Function<StockTransaction, String> keyFunction) {

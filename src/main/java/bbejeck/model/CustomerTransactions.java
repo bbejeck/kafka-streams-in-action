@@ -35,6 +35,13 @@ public class CustomerTransactions {
     }
 
     public CustomerTransactions merge(CustomerTransactions other) {
-           throw new IllegalStateException("Implement me");
+        for (Map.Entry<String, Integer> entry : stockPurchasedAmounts.entrySet()) {
+             Integer count = other.stockPurchasedAmounts.get(entry.getKey());
+             if(count != null) {
+                 int newCount = count + this.stockPurchasedAmounts.get(entry.getKey());
+                 this.stockPurchasedAmounts.put(entry.getKey(), newCount);
+             }
+        }
+        return this;
     }
 }
