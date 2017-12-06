@@ -2,7 +2,6 @@ package bbejeck.webserver;
 
 
 import bbejeck.model.CustomerTransactions;
-import bbejeck.model.StockPerformance;
 import com.google.gson.Gson;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
@@ -25,6 +24,9 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -59,20 +61,49 @@ public class InteractiveQueryServer {
         get("/window/:store/:key/:from/:to", (req, res) -> ready ? fetchFromWindowStore(req.params()) : STORES_NOT_ACCESSIBLE);
         get("/window/:store/:key", (req, res) -> ready ? fetchFromWindowStore(req.params()) : STORES_NOT_ACCESSIBLE);
         get("/kv/:store", (req, res) ->  ready ? fetchAllFromKeyValueStore(req.params()) : STORES_NOT_ACCESSIBLE);
+        // this is a special URL menant only for internal purposes
+        get("/kv/:store/:local", (req, res) ->  ready ? fetchAllFromLocalKeyValueStore(req.params()) : STORES_NOT_ACCESSIBLE);
         get("/session/:store/:key", (req, res) -> ready ? fetchFromSessionStore(req.params()) : STORES_NOT_ACCESSIBLE);
 
     }
 
+
+    private String fetchAllFromLocalKeyValueStore(Map<String, String> params) {
+        String store = params.get(STORE_PARAM);
+        Collection<StreamsMetadata> metadata = kafkaStreams.allMetadataForStore(store);
+        for (StreamsMetadata streamsMetadata : metadata) {
+            if(localData(streamsMetadata.hostInfo())){
+               return  getKeyValuesAsJson(store);
+            }
+        }
+      return "[]";
+    }
+
     private String fetchAllFromKeyValueStore(Map<String, String> params) {
         String store = params.get(STORE_PARAM);
-        ReadOnlyKeyValueStore<String, StockPerformance> readOnlyKeyValueStore = kafkaStreams.store(store, QueryableStoreTypes.keyValueStore());
-        List<KeyValue<String, StockPerformance>> keyValues = new ArrayList<>();
-        try(KeyValueIterator<String,StockPerformance> iterator = readOnlyKeyValueStore.all()) {
+        List<KeyValue<String, Long>> allResults = gson.fromJson(getKeyValuesAsJson(store), List.class);
+        Collection<StreamsMetadata> streamsMetadata = kafkaStreams.allMetadataForStore(store);
+        for (StreamsMetadata streamsMetadatum : streamsMetadata) {
+             if(dataNotLocal(streamsMetadatum.hostInfo())) {
+                 Map<String, String> newParams = new HashMap<>();
+                 newParams.put(":store", store);
+                 newParams.put(":local", "local");
+                 List<KeyValue<String, Long>> remoteResults = gson.fromJson(fetchRemote(streamsMetadatum.hostInfo(), "kv", newParams), List.class);
+                 allResults.addAll(remoteResults);
+             }
+        }
+        return gson.toJson(new HashSet<>(allResults));
+    }
+
+    private String getKeyValuesAsJson(String store) {
+        ReadOnlyKeyValueStore<String, Long> readOnlyKeyValueStore = kafkaStreams.store(store, QueryableStoreTypes.keyValueStore());
+        List<KeyValue<String, Long>> keyValues = new ArrayList<>();
+        try(KeyValueIterator<String, Long> iterator = readOnlyKeyValueStore.all()) {
                while(iterator.hasNext()) {
                    keyValues.add(iterator.next());
                }
         }
-       return gson.toJson(keyValues);
+        return gson.toJson(keyValues);
     }
 
     private String fetchFromSessionStore(Map<String, String> params) {
@@ -94,7 +125,10 @@ public class InteractiveQueryServer {
         List<CustomerTransactions> results = new ArrayList<>();
         try(KeyValueIterator<Windowed<String>, CustomerTransactions> iterator = readOnlySessionStore.fetch(key)){
             while(iterator.hasNext()) {
-                results.add(iterator.next().value);
+                KeyValue<Windowed<String>, CustomerTransactions> windowed =iterator.next();
+                CustomerTransactions transactions = windowed.value;
+                transactions.setSessionInfo(windowed.key.toString());
+                results.add(transactions);
             }
         }
         return gson.toJson(results);
@@ -122,12 +156,14 @@ public class InteractiveQueryServer {
         long now = instant.toEpochMilli();
         long from =  fromStr != null ? Long.parseLong(fromStr) : now - 60000;
         long to =  toStr != null ? Long.parseLong(toStr) : now;
-        List<Integer> results = new ArrayList<>();
+        List<String> results = new ArrayList<>();
 
         ReadOnlyWindowStore<String, Integer> readOnlyWindowStore = kafkaStreams.store(store, QueryableStoreTypes.windowStore());
         try(WindowStoreIterator<Integer> iterator = readOnlyWindowStore.fetch(key, from , to)){
              while (iterator.hasNext()) {
-                 results.add(iterator.next().value);
+                 KeyValue<Long, Integer> windowed = iterator.next();
+                 String result = String.format("%s@%d shares %d",key, windowed.key, windowed.value);
+                 results.add(result);
              }
         }
         return gson.toJson(results);
@@ -152,6 +188,11 @@ public class InteractiveQueryServer {
     private boolean dataNotLocal(HostInfo hostInfo) {
         return !this.hostInfo.equals(hostInfo);
     }
+
+    private boolean localData(HostInfo hostInfo) {
+        return !dataNotLocal(hostInfo);
+    }
+
     
     private HostInfo getHostInfo(String storeName, String key) {
          StreamsMetadata metadata = kafkaStreams.metadataForKey(storeName, key, stringSerializer);

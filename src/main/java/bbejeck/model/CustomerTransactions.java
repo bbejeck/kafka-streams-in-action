@@ -1,7 +1,9 @@
 package bbejeck.model;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * User: Bill Bejeck
@@ -11,6 +13,7 @@ import java.util.Map;
 public class CustomerTransactions {
 
     private Map<String,Integer> stockPurchasedAmounts = new HashMap<>();
+    private String sessionInfo;
 
 
     public CustomerTransactions update(StockTransaction stockTransaction) {
@@ -31,17 +34,26 @@ public class CustomerTransactions {
     public String toString() {
         return "CustomerTransactions{" +
                 "stockPurchasedAmounts=" + stockPurchasedAmounts +
+                ", sessionInfo='" + sessionInfo + '\'' +
                 '}';
     }
 
+    public void setSessionInfo(String sessionInfo) {
+        this.sessionInfo = sessionInfo;
+    }
+
     public CustomerTransactions merge(CustomerTransactions other) {
-        for (Map.Entry<String, Integer> entry : stockPurchasedAmounts.entrySet()) {
-             Integer count = other.stockPurchasedAmounts.get(entry.getKey());
-             if(count != null) {
-                 int newCount = count + this.stockPurchasedAmounts.get(entry.getKey());
-                 this.stockPurchasedAmounts.put(entry.getKey(), newCount);
-             }
+        Set<String> keys = new HashSet<>();
+        Map<String, Integer> merged = new HashMap<>();
+        keys.addAll(other.stockPurchasedAmounts.keySet());
+        keys.addAll(this.stockPurchasedAmounts.keySet());
+        for (String key : keys) {
+             Integer count = this.stockPurchasedAmounts.getOrDefault(key, 0);
+             Integer countOther = other.stockPurchasedAmounts.getOrDefault(key, 0);
+             merged.put(key, count + countOther);
+
         }
+        this.stockPurchasedAmounts = merged;
         return this;
     }
 }

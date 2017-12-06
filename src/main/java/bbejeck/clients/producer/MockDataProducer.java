@@ -151,11 +151,13 @@ public class MockDataProducer {
         executorService.submit(produceStockTransactionsTask);
     }
 
-    public static void produceStockTransactionsForIQ(int numberIterations) {
-        Runnable transactionsForIQ = () -> {
-            int counter = 0;
+    /**
+     * This method runs on the main thread and is expected to run as part of a
+     * standalone program and not embedded as it will block until completion
+     */
+    public static void produceStockTransactionsForIQ() {
             init();
-            while (counter++ < numberIterations && keepRunning) {
+            while (keepRunning) {
                 List<StockTransaction> transactions = DataGenerator.generateStockTransactionsForIQ(100);
                 for (StockTransaction transaction : transactions) {
                     String jsonTransaction = convertToJson(transaction);
@@ -172,8 +174,6 @@ public class MockDataProducer {
 
               LOG.info("Done generating transactions for IQ");
             }
-        };
-        executorService.submit(transactionsForIQ);
     }
 
     public static void produceStockTransactionsWithKeyFunction(int numberIterations, int numberTradedCompanies, int numberCustomers, Function<StockTransaction, String> keyFunction) {

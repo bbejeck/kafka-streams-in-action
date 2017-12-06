@@ -42,17 +42,16 @@ public class StockPerformanceInteractiveQueryApplication {
 
     private static final Logger LOG = LoggerFactory.getLogger(StockPerformanceInteractiveQueryApplication.class);
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
         if(args.length < 2){
-            LOG.error("Need to specify host, port and producer flag ");
+            LOG.error("Need to specify host, port");
             System.exit(1);
         }
 
         String host = args[0];
         int port = Integer.parseInt(args[1]);
         final HostInfo hostInfo = new HostInfo(host, port);
-        boolean shouldProduce = args.length > 2;
 
         Properties properties = getProperties();
         properties.put(StreamsConfig.APPLICATION_SERVER_CONFIG, host+":"+port);
@@ -132,12 +131,6 @@ public class StockPerformanceInteractiveQueryApplication {
             shutdown(kafkaStreams, queryServer);
         }));
 
-        if(shouldProduce) {
-            MockDataProducer.produceStockTransactionsForIQ(200000);
-            LOG.info("This instance is producing data");
-        } else {
-            LOG.info("Data is already being produced");
-        }
         LOG.info("Stock Analysis KStream Interactive Query App Started");
         kafkaStreams.cleanUp();
         kafkaStreams.start();
@@ -147,7 +140,6 @@ public class StockPerformanceInteractiveQueryApplication {
         LOG.info("Shutting down the Stock Analysis Interactive Query App Started now");
         kafkaStreams.close();
         queryServer.stop();
-        MockDataProducer.shutdown();
     }
 
     private static Properties getProperties() {
