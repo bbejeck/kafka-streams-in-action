@@ -3,8 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <script src="jquery-3.2.1.min.js"></script>
+    <link rel="stylesheet" href="jquery-ui.min.css">
+    <script src="jquery.js"></script>
+    <script src="jquery-ui.min.js"></script>
+</head>
+
+<script>
+    function loadIqTables() {
+        $.getJSON("http://localhost:4568/kv/TransactionsBySector", function (response) {
+            updateTable(response, $('#txnsTable'))
+        })
+    }
+
+    function updateTable(response, table) {
+        $.each(response, function (index, element) {
+            if ($("tr[id='" + element.key + "']").length) {
+                $('#' + element.key + '_td').animate({color:'red'}, 1000)
+                    .text(element.value)
+                    .animate({color:'black'}, 500)
+            } else {
+                var row = $('<tr id="' + element.key + '">')
+                row.append($('<td>' + element.key + '</td><td id="' + element.key + '_td">' + element.value + '</td>'))
+                table.append(row)
+                row.animate({color:'red'}, 1000).animate({color:'black'}, 500)
+            }
+        })
+    }
+
+    setInterval(loadIqTables, 5000);
+</script>
 </head>
 <body>
+<div id="txnsDiv">
+    <table id="txnsTable"></table>
+</div>
+
+<div id="div2" style="width:80px;height:80px;display:none;background-color:green;"></div>
+<br>
+<div id="div3" style="width:80px;height:80px;display:none;background-color:blue;"></div>
 
 </body>
 </html>

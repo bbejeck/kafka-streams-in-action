@@ -30,8 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import static spark.Spark.get;
-import static spark.Spark.port;
+import static spark.Spark.*;
 
 
 public class InteractiveQueryServer {
@@ -53,6 +52,7 @@ public class InteractiveQueryServer {
     public InteractiveQueryServer(final KafkaStreams kafkaStreams, final HostInfo hostInfo) {
         this.kafkaStreams = kafkaStreams;
         this.hostInfo = hostInfo;
+        staticFiles.location("/webserver");
         port(hostInfo.port());
     }
 
@@ -64,6 +64,11 @@ public class InteractiveQueryServer {
         // this is a special URL menant only for internal purposes
         get("/kv/:store/:local", (req, res) ->  ready ? fetchAllFromLocalKeyValueStore(req.params()) : STORES_NOT_ACCESSIBLE);
         get("/session/:store/:key", (req, res) -> ready ? fetchFromSessionStore(req.params()) : STORES_NOT_ACCESSIBLE);
+        get("/iq", (req, res) -> {
+              res.redirect("interactiveQueriesResponse.html");
+              return "";
+        });
+
 
     }
 
