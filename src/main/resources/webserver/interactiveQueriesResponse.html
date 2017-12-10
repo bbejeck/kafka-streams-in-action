@@ -11,7 +11,7 @@
 
 <script>
     function loadIqTables() {
-        $.getJSON("http://localhost:4568/kv/TransactionsBySector", function (response) {
+        $.getJSON("/kv/TransactionsBySector", function (response) {
             updateTable(response, $('#txnsTable'))
         })
     }
@@ -23,9 +23,9 @@
                     .text(element.value)
                     .animate({color:'black'}, 500)
             } else {
-                var row = $('<tr id="' + element.key + '">')
-                row.append($('<td>' + element.key + '</td><td id="' + element.key + '_td">' + element.value + '</td>'))
-                table.append(row)
+                var row = $('<tr id="' + element.key + '">');
+                row.append($('<td>' + element.key + '</td><td id="' + element.key + '_td">' + element.value + '</td>'));
+                table.append(row);
                 row.animate({color:'red'}, 1000).animate({color:'black'}, 500)
             }
         })
