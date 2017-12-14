@@ -83,7 +83,7 @@ public class StockPerformanceInteractiveQueryApplication {
         
         stockTransactionKStream.map((k,v) -> KeyValue.pair(v.getCustomerId(), v))
                 .groupByKey(Serialized.with(stringSerde, stockTransactionSerde))
-                .windowedBy(SessionWindows.with(TimeUnit.MINUTES.toMillis(5)))
+                .windowedBy(SessionWindows.with(TimeUnit.MINUTES.toMillis(60)).until(TimeUnit.MINUTES.toMillis(120)))
                 .aggregate(CustomerTransactions::new,(k, v, ct) -> ct.update(v),
                         (k, ct, other)-> ct.merge(other),
                         Materialized.<String, CustomerTransactions, SessionStore<Bytes, byte[]>>as("CustomerPurchaseSessions")
