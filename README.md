@@ -5,9 +5,6 @@
 1. Kafka and Kafka Streams are now at version 1.0!
 2. With the official release of 1.0, I've been able to remove the kafka-streams and kafka-clients jar files from the project and the related test jar
 files as well.
-3. Since this chapter is all about testing, all examples run as tests from within your IDE, although if you want you can run tests from the command line
-via a `./gradlew clean test` command.
-4. All unit tests use JUnit 5.0, so it's good opportunity to learn the changes that have come with the new version.
 5. As before, chapter 6 forward uses the new Kafka Streams 1.0 API, chapters 3-5 will get updated before publication to the new API.
 There will still be some use of deprecated classes and methods for now, but before final publication all code and accompanying examples in the text will be updated to the 1.0 version.
 6. Logging as been added to the application and there is now a logs directory with logs for the application and various examples. Eventually the all code in the project
@@ -66,6 +63,11 @@ Again it does not matter which port you point to you'll get the same results.
 #### Previous Updates
 
 Here are some notes regarding the source code:
+
+3. Since chapter 8 is all about testing, all examples run as tests from within your IDE, although if you want you can run tests from the command line
+via a `./gradlew clean test` command.
+
+4. All unit tests use JUnit 5.0, so it's good opportunity to learn the changes that have come with the new version.
 
 1. Chapter 7 examples are concerned with observing performance so at least one of the examples will continue to run until you explicitly stop the program
 from running.  Most of the related results are found in log files or viewed JMX.
