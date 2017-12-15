@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="jquery-3.2.1.min.js"></script>
+    <link rel="stylesheet" href="jquery-ui.theme.css">
+    <script src="jquery.js"></script>
+    <script src="jquery-ui.min.js"></script>
+    <script src="jquery.color-2.1.2.js"></script>
+
+<style>
+    body {
+        -webkit-font-smoothing: antialiased;
+        background-color: #333333;
+        color: #CCCCCC;
+        font: 15px/22.5px "Helvetica Neue", HelveticaNeue, Helvetica, Arial, sans-serif;
+    }
+
+    h2 { text-align: center}
+    h3 { text-align: center}
+    table {margin: auto}
+    tr {text-align: center}
+    th {font-weight: bold}
+</style>
+
+<script>
+
+    var symbols = ["AEBB", "VABC", "ALBC", "EABC", "BWBC", "BNBC", "MASH", "BARX", "WNBC", "WKRP"];
+    var customers = ["12345678", "222333444", "33311111", "55556666", "4488990011", "77777799", "111188886","98765432", "665552228", "660309116"];
+    
+    function loadIqTables() {
+        
+        $.getJSON("/kv/TransactionsBySector", function (response) {
+            updateTable(response, $('#txnsTable'))
+            $('#txnsHeader').animate({color:'red'}, 500).animate({color:'#CCCCCC'}, 500)
+        })
+
+        updateTableWithList("/window/NumberSharesPerPeriod/", symbols, $('#stockTable'), $('#stockHeader'));
+
+        updateTableWithList("/session/CustomerPurchaseSessions/", customers, $('#sessionTable'), $('#sessionHeader'))
+
+    }
+
+    function updateTableWithList(path, values, table, header) {
+        $.each(values, function (index, value) {
+            $.getJSON(path + value, function (response) {
+                updateTable(response, table)
+            })
+        });
+        header.animate({color:'red'}, 500).animate({color:'#CCCCCC'}, 500)
+    }
+
+    function updateTable(response, table) {
+        $.each(response, function (index, element) {
+
+            var key = element.key === "Health Care" ? "Health_Care" : element.key;
+
+            if ($("tr[id='" + key + "']").length) {
+                $("td[id='" + key + "_td']").text(element.value)
+            } else {
+                var row = $('<tr id="' + key + '">');
+                row.append($('<td>' + key + '</td><td id="' + key + '_td">' + element.value + '</td>'));
+                table.append(row);
+            }
+        })
+    }
+
+    setInterval(loadIqTables, 7000);
+</script>
+
+</head>
+
+<body>
+
+<h2>Kafka Streams Equities Dashboard Application</h2>
+
+<div id="txnsDiv">
+    <h3 id="txnsHeader">Total Transactions by Market Sector Table</h3>
+    <table id="txnsTable">
+        <tr><th>Sector</th><th>NumberShares</th></tr>
+    </table>
+
+</div>
+
+<br/>
+
+<div id="stocksDiv">
+    <h3 id="stockHeader">Number of Stock Transaction by Stock Symbol Table</h3>
+    <table id="stockTable">
+      <tr><th>Stock Symbol</th><th>Shares Per Transaction Window</th></tr>
+    </table>
+</div>
+
+<br/>
+
+<div id="sessionDiv">
+    <h3 id="sessionHeader">Customer Session Equity Activity Table</h3>
+    <table id="sessionTable">
+        <tr><th>Customer Id</th><th>Average Equity Transaction Spent Per Session</th></tr>
+    </table>
+</div>
+
+</body>
+</html>

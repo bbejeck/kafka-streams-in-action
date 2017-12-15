@@ -1,7 +1,6 @@
 package bbejeck.chapter_9;
 
 
-import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTransaction;
 import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -11,35 +10,40 @@ import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.Printed;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-public class StockPerformanceStreamsConnectIntegrationApplication {
+public class StockCountsStreamsConnectIntegrationApplication {
 
+    private static final Logger LOG = LoggerFactory.getLogger(StockCountsStreamsConnectIntegrationApplication.class);
 
     public static void main(String[] args) throws Exception {
 
 
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
         Serde<String> stringSerde = Serdes.String();
-        Serde<StockPerformance> stockPerformanceSerde = StreamsSerdes.StockPerformanceSerde();
         Serde<StockTransaction> stockTransactionSerde = StreamsSerdes.StockTransactionSerde();
-
-
-
+        Serde<Long> longSerde = Serdes.Long();
+        
         StreamsBuilder builder = new StreamsBuilder();
 
 
 
         builder.stream("dbTxnTRANSACTIONS",  Consumed.with(stringSerde, stockTransactionSerde))
-                      .print(Printed.<String, StockTransaction>toSysOut().withLabel("Transaction"));
-
-        //Uncomment this line and comment out the line above for writing to a topic
-        //.to(stringSerde, stockPerformanceSerde, "stock-performance");
+                      .peek((k, v)-> LOG.info("transactions from database key {} value {}",k, v))
+                      .groupByKey(Serialized.with(stringSerde, stockTransactionSerde))
+                      .aggregate(()-> 0L,(symb, stockTxn, numShares) -> numShares + stockTxn.getShares(),
+                              Materialized.with(stringSerde, longSerde)).toStream()
+                             .peek((k,v) -> LOG.info("Aggregated stock sales for {} {}",k, v))
+                             .to( "stock-counts", Produced.with(stringSerde, longSerde));
 
 
         KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfig);
@@ -47,17 +51,15 @@ public class StockPerformanceStreamsConnectIntegrationApplication {
 
         Runtime.getRuntime().addShutdownHook(new Thread(()-> {
             doneSignal.countDown();
-            System.out.println("Shutting down the Stock Analysis KStream Connect App Started now");
+            LOG.info("Shutting down the Stock Analysis KStream Connect App Started now");
             kafkaStreams.close();
         }));
 
-        System.out.println("Stock Analysis KStream Connect App Started");
+        
+        LOG.info("Stock Analysis KStream Connect App Started");
         kafkaStreams.cleanUp();
         kafkaStreams.start();
         doneSignal.await();
-
-
-
 
     }
 

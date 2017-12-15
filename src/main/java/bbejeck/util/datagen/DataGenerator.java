@@ -15,6 +15,7 @@ import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -153,10 +154,59 @@ public class DataGenerator {
         return transactions;
     }
 
+    public static List<StockTransaction> generateStockTransactionsForIQ(int number) {
+        return generateStockTransactions(generateCustomersForInteractiveQueries(), generatePublicTradedCompaniesForInteractiveQueries(), number);
+    }
+
 
     public static List<PublicTradedCompany> stockTicker(int numberCompanies) {
         return generatePublicTradedCompanies(numberCompanies);
     }
+
+
+    /**
+     * This is a special method for returning the List of PublicTradedCompany to use for
+     * Interactive Query examples.  This method uses a fixed list of company names and ticker symbols
+     * to make querying by key easier for demo purposes.
+     *
+     * @return List of PublicTradedCompany for interactive queries
+     */
+    public static List<PublicTradedCompany> generatePublicTradedCompaniesForInteractiveQueries() {
+        List<String> symbols = Arrays.asList("AEBB", "VABC", "ALBC", "EABC", "BWBC", "BNBC", "MASH", "BARX", "WNBC", "WKRP");
+        List<String> companyName = Arrays.asList("Acme Builders", "Vector Abbot Corp","Albatros Enterprise", "Enterprise Atlantic",
+                "Bell Weather Boilers","Broadcast Networking","Mobile Surgical", "Barometer Express", "Washington National Business Corp","Cincinnati Radio Corp.");
+        List<PublicTradedCompany> companies = new ArrayList<>();
+        Faker faker = new Faker();
+
+        for (int i = 0; i < symbols.size(); i++) {
+            double volatility = Double.parseDouble(faker.options().option("0.01", "0.02", "0.03", "0.04", "0.05", "0.06", "0.07", "0.08", "0.09"));
+            double lastSold = faker.number().randomDouble(2, 15, 150);
+            String sector = faker.options().option("Energy", "Finance", "Technology", "Transportation", "Health Care");
+            String industry = faker.options().option("Oil & Gas Production", "Coal Mining", "Commercial Banks", "Finance/Investors Services", "Computer Communications Equipment", "Software Consulting", "Aerospace", "Railroads", "Major Pharmaceuticals");
+            companies.add(new PublicTradedCompany(volatility, lastSold, symbols.get(i), companyName.get(i), sector, industry));
+        }
+       return companies;
+    }
+
+    /**
+     * Special method for generating customers with static customer ID's so
+     * we can easily run interactive queries with a predictable list of names
+     * @return customer list
+     */
+    public static List<Customer> generateCustomersForInteractiveQueries() {
+        List<Customer> customers = new ArrayList<>(10);
+        List<String> customerIds = Arrays.asList("12345678", "222333444", "33311111", "55556666", "4488990011", "77777799", "111188886","98765432", "665552228", "660309116");
+        Faker faker = new Faker();
+        List<String> creditCards = generateCreditCardNumbers(10);
+        for (int i = 0; i < 10; i++) {
+            Name name = faker.name();
+            String creditCard = creditCards.get(i);
+            String customerId = customerIds.get(i);
+            customers.add(new Customer(name.firstName(), name.lastName(), customerId, creditCard));
+        }
+        return customers;
+    }
+
 
 
     public static List<PublicTradedCompany> generatePublicTradedCompanies(int numberCompanies) {

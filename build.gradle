@@ -106,6 +106,33 @@ task runZmartJmxAndProducerInterecptor_Chapter_7(type: JavaExec) {
     main = "bbejeck.chapter_7.ZMartKafkaStreamsAdvancedReqsMetricsApp"
 }
 
+task runDatabaseInserts(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.util.db.DBServer"
+}
+
+task runStreamsConnectIntegration_Chapter_9(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_9.StockCountsStreamsConnectIntegrationApplication"
+}
+
+task runProducerInteractiveQueries(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_9.StockPerformanceInteractiveQueryDataProducer"
+}
+
+task runInteractiveQueryApplicationOne(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_9.StockPerformanceInteractiveQueryApplication"
+    args = ['localhost','4567']
+}
+
+task runInteractiveQueryApplicationTwo(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_9.StockPerformanceInteractiveQueryApplication"
+    args = ['localhost','4568']
+}
+
 
 jar {
   archiveName='bbejeck-kafka-streams-in-action-1.0-SNAPSHOT.jar'
@@ -139,12 +166,13 @@ dependencies {
     compile group: 'com.sparkjava', name: 'spark-core', version: '2.6.0'
     compile group: 'com.esotericsoftware', name: 'kryo', version: '4.0.0'
     compile group: 'com.h2database', name:'h2', version: '1.4.196'
-    compile group: 'org.apache.kafka', name:'kafka-streams', version: '1.0.0'
-    compile group: 'org.apache.kafka', name:'kafka-clients', version: '1.0.0'
-
     compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.1'
 
     compile group: 'org.apache.kafka', name: 'connect-api', version: '1.0.0'
+
+    compile group: 'org.apache.kafka', name:'kafka-streams', version: '1.0.0'
+    compile group: 'org.apache.kafka', name:'kafka-clients', version: '1.0.0'
+
 
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.3.6'
     
