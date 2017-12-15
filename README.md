@@ -17,14 +17,19 @@ is the Kafka-Connect and Kafka Streams integration.
 
 ##### Kafka-Connect & Kafka Streams Example
 To run the Kafka Connect and Kafka Streams example you'll need to do the following:
+
 1. Update the `plugin-path` property in the `connect-standalone.properties` file to the path where you cloned this repository.  The `plugin-path` property
 contains the path to the upber-jar file with the Confluent JDBC connector and the H2 database classes.  Make sure just to update the base location of where
 you installed the source code, but leave the rest of the path in place.
+
 2. Copy both the `connector-jdbc.properites` and `connect-standalone.properties` files to the `<kafka install dir>/config` directory.
+
 3. Open a terminal window and cd into the base directory of the source code, the run `./gradlew runDatabaseInserts` this will start the H2 database servers and start
 inserting data into a table that Kafka-Connect monitors.
+
 4. In another terminal window cd into `<kafka install dir>/bin` and run `./connect-standalone.sh ../config/connect-standalone.properties ../config/connector-jdbc.properties` this will start
 Kafka Connect and it will start pulling data from the database table into Kafka.
+
 5. Open a third terminal window from the base of the source code install and run `./gradlew runStreamsConnectIntegration_Chapter_9` and this will start the Kafka Streams 
 application that will start stream processing data from a database table via Connect!
 
