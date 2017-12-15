@@ -9,7 +9,7 @@ files as well.
 via a `./gradlew clean test` command.
 4. All unit tests use JUnit 5.0, so it's good opportunity to learn the changes that have come with the new version.
 5. As before, chapter 6 forward uses the new Kafka Streams 1.0 API, chapters 3-5 will get updated before publication to the new API.
-may still be some use of deprecated classes and methods here and there.
+There will still be some use of deprecated classes and methods for now, but before final publication all code and accompanying examples in the text will be updated to the 1.0 version.
 6. Logging as been added to the application and there is now a logs directory with logs for the application and various examples. Eventually the all code in the project
 will get migrated to logging vs sysout.
 
@@ -35,6 +35,33 @@ For this example to work properly you must start the database server/insert proc
 
 To clean up or start the example over remove the Connect offsets (stored in the file `/tmp/connect.offsets` by default) and remove the H2 database file
 file (`findata.mv.db`) stored in your home directory.
+
+##### Running the Interactive Query Examples
+
+To prepare for the interactive queries, you'll need to increase the partitions on the `stock-transactions` topic to two partitions with the following command:
+`<kafka base dir>/bin/kafka-topics.sh --alter --partitions 2 --zookeeper localhost:2181 --topic stock-transactions`
+
+The to run the interactive query examples you'll execute 3 commands, each in a separate terminal, from the base directory of the source code install:
+
+1. `./gradlew runProducerInteractiveQueries` runs the producer sending
+2. `./gradlew runInteractiveQueryApplicationOne` starts a Streams instance with an embedded web server on `localhost:4567`
+3. `./gradlew runInteractiveQueryApplicationTwo` starts a Streams instance with an embedded web server on `localhost:4568`
+
+After all three are running you can try out some of the REST calls from your browser.  It does'nt matter which port you choose, you'll retrieve the same results.
+Here are some examples:
+
+* `http://localhost:4567/kv/TransactionsBySector` shows aggregated transactions by market sector 
+* `http://localhost:4567/window/NumberSharesPerPeriod/XXXX` shows the number of shares traded over 10 second windows for the last 30 seconds for a given stock symbol.  Just replace the `XXXX` with one of the following `AEBB, VABC, ALBC, EABC, BWBC, BNBC, MASH, BARX, WNBC, WKRP`
+* `http://localhost:4567/session/CustomerPurchaseSessions/NNNNNNNNN` displays the average dollar amount spent per share by customers over one hour sessions.  Just replace the `NNNNNNNNN` with one of the following customer ids `12345678, 222333444, 33311111, 55556666, 4488990011, 77777799, 111188886,98765432, 665552228, 660309116`
+
+
+##### The Interactive Queries Web Application
+
+However the _*best way*_ to watch Interactive Queries in action is to point your browser to `localhost:4568/iq` or `localhost:4567/iq`.  
+This will launch a web application that updates results for all parameters over all three stores `TransactionsBySector, NumberSharesPerPeriod, CustomerPurchaseSessions` every 
+7 seconds via ajax requests to the REST endpoints and are displayed in the web application. 
+
+Again it does not matter which port you point to you'll get the same results.
 
 #### Previous Updates
 

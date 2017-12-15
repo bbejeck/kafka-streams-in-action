@@ -57,7 +57,7 @@ public class InteractiveQueryServer {
         staticFiles.location("/webserver");
         port(hostInfo.port());
     }
-
+    
     public void init() {
         LOG.info("Started the Interactive Query Web server");
         get("/window/:store/:key/:from/:to", (req, res) -> ready ? fetchFromWindowStore(req.params()) : STORES_NOT_ACCESSIBLE);
@@ -206,7 +206,15 @@ public class InteractiveQueryServer {
         } else {
             url = String.format("http://%s:%d/%s/%s/%s", hostInfo.host(), hostInfo.port(), path, store, key);
         }
-        return client.target(url).request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+
+        String remoteResponseValue = "";
+
+        try {
+            remoteResponseValue = client.target(url).request(MediaType.APPLICATION_JSON_TYPE).get(String.class);
+        } catch (Exception e) {
+            LOG.error("Problem connecting " + e.getMessage());
+        }
+        return remoteResponseValue;
     }
 
     private boolean dataNotLocal(HostInfo hostInfo) {

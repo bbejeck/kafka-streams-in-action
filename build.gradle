@@ -116,6 +116,23 @@ task runStreamsConnectIntegration_Chapter_9(type: JavaExec) {
     main = "bbejeck.chapter_9.StockCountsStreamsConnectIntegrationApplication"
 }
 
+task runProducerInteractiveQueries(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_9.StockPerformanceInteractiveQueryDataProducer"
+}
+
+task runInteractiveQueryApplicationOne(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_9.StockPerformanceInteractiveQueryApplication"
+    args = ['localhost','4567']
+}
+
+task runInteractiveQueryApplicationTwo(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "bbejeck.chapter_9.StockPerformanceInteractiveQueryApplication"
+    args = ['localhost','4568']
+}
+
 
 jar {
   archiveName='bbejeck-kafka-streams-in-action-1.0-SNAPSHOT.jar'

@@ -54,12 +54,14 @@
 
     function updateTable(response, table) {
         $.each(response, function (index, element) {
-            if ($("tr[id='" + element.key + "']").length) {
-                $('#' + element.key + '_td').text(element.value)
 
+            var key = element.key === "Health Care" ? "Health_Care" : element.key;
+
+            if ($("tr[id='" + key + "']").length) {
+                $("td[id='" + key + "_td']").text(element.value)
             } else {
-                var row = $('<tr id="' + element.key + '">');
-                row.append($('<td>' + element.key + '</td><td id="' + element.key + '_td">' + element.value + '</td>'));
+                var row = $('<tr id="' + key + '">');
+                row.append($('<td>' + key + '</td><td id="' + key + '_td">' + element.value + '</td>'));
                 table.append(row);
             }
         })
