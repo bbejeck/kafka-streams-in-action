@@ -29,18 +29,21 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Printed;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
 
 public class ZMartKafkaStreamsApp {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ZMartKafkaStreamsApp.class);
+
     public static void main(String[] args) throws Exception {
 
-
-        //Used only to produce data for this application, not typical usage
-        MockDataProducer.producePurchaseData();
 
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
 
@@ -56,26 +59,29 @@ public class ZMartKafkaStreamsApp {
         
         KStream<String, PurchasePattern> patternKStream = purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build());
 
-        patternKStream.print(stringSerde,purchasePatternSerde,"patterns");
-        patternKStream.to(stringSerde,purchasePatternSerde,"patterns");
+        patternKStream.print(Printed.<String, PurchasePattern>toSysOut().withLabel("patterns"));
+        patternKStream.to("patterns", Produced.with(stringSerde,purchasePatternSerde));
 
         
         KStream<String, RewardAccumulator> rewardsKStream = purchaseKStream.mapValues(purchase -> RewardAccumulator.builder(purchase).build());
 
-        rewardsKStream.print(stringSerde,rewardAccumulatorSerde,"rewards");
-        rewardsKStream.to(stringSerde,rewardAccumulatorSerde,"rewards");
+        rewardsKStream.print(Printed.<String, RewardAccumulator>toSysOut().withLabel("rewards"));
+        rewardsKStream.to("rewards", Produced.with(stringSerde,rewardAccumulatorSerde));
 
 
 
-        purchaseKStream.print(Serdes.String(),purchaseSerde,"purchases");
-        purchaseKStream.to(Serdes.String(),purchaseSerde,"purchases");
+        purchaseKStream.print(Printed.<String, Purchase>toSysOut().withLabel("purchases"));
+        purchaseKStream.to("purchases", Produced.with(Serdes.String(),purchaseSerde));
 
+
+        // used only to produce data for this application, not typical usage
+        MockDataProducer.producePurchaseData();
 
         KafkaStreams kafkaStreams = new KafkaStreams(streamsBuilder.build(),streamsConfig);
-        System.out.println("ZMart First Kafka Streams Application Started");
+        LOG.info("ZMart First Kafka Streams Application Started");
         kafkaStreams.start();
         Thread.sleep(65000);
-        System.out.println("Shutting down the Kafka Streams Application now");
+        LOG.info("Shutting down the Kafka Streams Application now");
         kafkaStreams.close();
         MockDataProducer.shutdown();
     }
