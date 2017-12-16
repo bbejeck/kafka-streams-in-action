@@ -11,24 +11,32 @@ import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
+import org.apache.kafka.streams.kstream.Printed;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.SessionWindows;
 import org.apache.kafka.streams.kstream.Windowed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Properties;
 
 import static bbejeck.clients.producer.MockDataProducer.STOCK_TRANSACTIONS_TOPIC;
-import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.LATEST;
-import static bbejeck.util.Topics.*;
+import static bbejeck.util.Topics.CLIENTS;
+import static bbejeck.util.Topics.COMPANIES;
+import static org.apache.kafka.streams.Topology.AutoOffsetReset.LATEST;
 
 public class GlobalKTableExample {
+
+    private static Logger LOG = LoggerFactory.getLogger(GlobalKTableExample.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -40,7 +48,7 @@ public class GlobalKTableExample {
         Serde<TransactionSummary> transactionSummarySerde = StreamsSerdes.TransactionSummarySerde();
 
 
-        KStreamBuilder kStreamBuilder = new KStreamBuilder();
+        StreamsBuilder builder = new StreamsBuilder();
         long twentySeconds = 1000 * 20;
 
         KeyValueMapper<Windowed<TransactionSummary>, Long, KeyValue<String, TransactionSummary>> transactionMapper = (window, count) -> {
@@ -51,40 +59,40 @@ public class GlobalKTableExample {
         };
 
         KStream<String, TransactionSummary> countStream =
-                kStreamBuilder.stream(LATEST, stringSerde, transactionSerde, STOCK_TRANSACTIONS_TOPIC)
-                        .groupBy((noKey, transaction) -> TransactionSummary.from(transaction), transactionSummarySerde, transactionSerde)
-                        .count(SessionWindows.with(twentySeconds), "session-windowed-customer-transaction-counts")
+                builder.stream( STOCK_TRANSACTIONS_TOPIC, Consumed.with(stringSerde, transactionSerde).withOffsetResetPolicy(LATEST))
+                        .groupBy((noKey, transaction) -> TransactionSummary.from(transaction), Serialized.with(transactionSummarySerde, transactionSerde))
+                        .windowedBy(SessionWindows.with(twentySeconds)).count()
                         .toStream().map(transactionMapper);
 
-        GlobalKTable<String, String> publicCompanies = kStreamBuilder.globalTable(COMPANIES.topicName(), "global-company-store");
-        GlobalKTable<String, String> clients = kStreamBuilder.globalTable(CLIENTS.topicName(), "global-clients-store");
+        GlobalKTable<String, String> publicCompanies = builder.globalTable(COMPANIES.topicName());
+        GlobalKTable<String, String> clients = builder.globalTable(CLIENTS.topicName());
 
 
         countStream.leftJoin(publicCompanies, (key, txn) -> txn.getStockTicker(),TransactionSummary::withCompanyName)
                 .leftJoin(clients, (key, txn) -> txn.getCustomerId(), TransactionSummary::withCustomerName)
-                .print(stringSerde, transactionSummarySerde,"Resolved Transaction Summaries");
+                .print(Printed.<String, TransactionSummary>toSysOut().withLabel("Resolved Transaction Summaries"));
 
 
         
-        KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder, streamsConfig);
+        KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfig);
         kafkaStreams.cleanUp();
 
 
         kafkaStreams.setUncaughtExceptionHandler((t, e) -> {
-            System.out.println("had exception " + e);
-            e.printStackTrace();
+            LOG.error("had exception ", e);
         });
+
         CustomDateGenerator dateGenerator = CustomDateGenerator.withTimestampsIncreasingBy(Duration.ofMillis(750));
 
-        DataGenerator.setTimestampGenerator(() -> dateGenerator.get());
+        DataGenerator.setTimestampGenerator(dateGenerator::get);
 
         MockDataProducer.produceStockTransactions(2, 5, 3, true);
 
-        System.out.println("Starting GlobalKTable Example");
+        LOG.info("Starting GlobalKTable Example");
         kafkaStreams.cleanUp();
         kafkaStreams.start();
         Thread.sleep(65000);
-        System.out.println("Shutting down the GlobalKTable Example Application now");
+        LOG.info("Shutting down the GlobalKTable Example Application now");
         kafkaStreams.close();
         MockDataProducer.shutdown();
     }

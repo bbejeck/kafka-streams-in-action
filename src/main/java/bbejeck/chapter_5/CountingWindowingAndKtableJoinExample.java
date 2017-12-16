@@ -5,32 +5,39 @@ import bbejeck.chapter_5.timestamp_extractor.StockTransactionTimestampExtractor;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.StockTransaction;
 import bbejeck.model.TransactionSummary;
-import bbejeck.util.datagen.DataGenerator;
 import bbejeck.util.datagen.CustomDateGenerator;
+import bbejeck.util.datagen.DataGenerator;
 import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Printed;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.SessionWindows;
 import org.apache.kafka.streams.kstream.ValueJoiner;
 import org.apache.kafka.streams.kstream.Windowed;
-import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
-import org.apache.kafka.streams.kstream.internals.WindowedSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Properties;
 
 import static bbejeck.clients.producer.MockDataProducer.STOCK_TRANSACTIONS_TOPIC;
-import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.EARLIEST;
-import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.LATEST;
+import static org.apache.kafka.streams.Topology.AutoOffsetReset.EARLIEST;
+import static org.apache.kafka.streams.Topology.AutoOffsetReset.LATEST;
+
 
 public class CountingWindowingAndKtableJoinExample {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CountingWindowingAndKtableJoinExample.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -41,31 +48,29 @@ public class CountingWindowingAndKtableJoinExample {
         Serde<StockTransaction> transactionSerde = StreamsSerdes.StockTransactionSerde();
         Serde<TransactionSummary> transactionKeySerde = StreamsSerdes.TransactionSummarySerde();
 
-        WindowedSerializer<TransactionSummary> windowedSerializer = new WindowedSerializer<>(transactionKeySerde.serializer());
-        WindowedDeserializer<TransactionSummary> windowedDeserializer = new WindowedDeserializer<>(transactionKeySerde.deserializer());
-        Serde<Windowed<TransactionSummary>> windowedSerde = Serdes.serdeFrom(windowedSerializer, windowedDeserializer);
-
-        KStreamBuilder kStreamBuilder = new KStreamBuilder();
+        StreamsBuilder builder = new StreamsBuilder();
         long twentySeconds = 1000 * 20;
         long fifteenMinutes = 1000 * 60 * 15;
         long fiveSeconds = 1000 * 5;
         KTable<Windowed<TransactionSummary>, Long> customerTransactionCounts =
-                 kStreamBuilder.stream(LATEST, stringSerde, transactionSerde, STOCK_TRANSACTIONS_TOPIC)
-                .groupBy((noKey, transaction) -> TransactionSummary.from(transaction), transactionKeySerde, transactionSerde)
-                .count(SessionWindows.with(twentySeconds).until(fifteenMinutes),"session-windowed-customer-transaction-counts");
+                 builder.stream(STOCK_TRANSACTIONS_TOPIC, Consumed.with(stringSerde, transactionSerde).withOffsetResetPolicy(LATEST))
+                .groupBy((noKey, transaction) -> TransactionSummary.from(transaction),
+                        Serialized.with(transactionKeySerde, transactionSerde))
+                 // session window comment line below and uncomment another line below for a different window example
+                .windowedBy(SessionWindows.with(twentySeconds).until(fifteenMinutes)).count();
 
                 //The following are examples of different windows examples
 
                 //Tumbling window with timeout 15 minutes
-                //.count(TimeWindows.of(twentySeconds).until(fifteenMinutes),"tumbling-windowed-customer-transaction-counts");
+                //.windowedBy(TimeWindows.of(twentySeconds).until(fifteenMinutes)).count();
 
                 //Tumbling window with default timeout 24 hours
-                //.count(TimeWindows.of(twentySeconds),"tumbling-windowed-customer-transaction-counts");
+                //.windowedBy(TimeWindows.of(twentySeconds)).count();
 
                 //Hopping window 
-                //.count(TimeWindows.of(twentySeconds).advanceBy(fiveSeconds).until(fifteenMinutes),"hopping-windowed-customer-transaction-counts");
+                //.windowedBy(TimeWindows.of(twentySeconds).advanceBy(fiveSeconds).until(fifteenMinutes)).count();
 
-        customerTransactionCounts.toStream().print(windowedSerde, Serdes.Long(),"Customer Transactions Counts");
+        customerTransactionCounts.toStream().print(Printed.<Windowed<TransactionSummary>, Long>toSysOut().withLabel("Customer Transactions Counts"));
 
         KStream<String, TransactionSummary> countStream = customerTransactionCounts.toStream().map((window, count) -> {
                       TransactionSummary transactionSummary = window.key();
@@ -74,36 +79,35 @@ public class CountingWindowingAndKtableJoinExample {
                       return KeyValue.pair(newKey, transactionSummary);
         });
 
-        KTable<String, String> financialNews = kStreamBuilder.table(EARLIEST, "financial-news", "financial-news-store");
+        KTable<String, String> financialNews = builder.table( "financial-news", Consumed.with(EARLIEST));
 
 
         ValueJoiner<TransactionSummary, String, String> valueJoiner = (txnct, news) ->
                 String.format("%d shares purchased %s related news [%s]", txnct.getSummaryCount(), txnct.getStockTicker(), news);
 
-        KStream<String,String> joined = countStream.leftJoin(financialNews, valueJoiner, stringSerde, transactionKeySerde);
+        KStream<String,String> joined = countStream.leftJoin(financialNews, valueJoiner, Joined.with(stringSerde, transactionKeySerde, stringSerde));
 
-        joined.print("Transactions and News");
+        joined.print(Printed.<String, String>toSysOut().withLabel("Transactions and News"));
 
 
 
-        KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder, streamsConfig);
+        KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfig);
         kafkaStreams.cleanUp();
         
         kafkaStreams.setUncaughtExceptionHandler((t, e) -> {
-            System.out.println("had exception "+e);
-            e.printStackTrace();
+            LOG.error("had exception ", e);
         });
         CustomDateGenerator dateGenerator = CustomDateGenerator.withTimestampsIncreasingBy(Duration.ofMillis(750));
         
-        DataGenerator.setTimestampGenerator(() -> dateGenerator.get());
+        DataGenerator.setTimestampGenerator(dateGenerator::get);
         
         MockDataProducer.produceStockTransactions(2, 5, 3, false);
 
-        System.out.println("Starting CountingWindowing and KTableJoins Example");
+        LOG.info("Starting CountingWindowing and KTableJoins Example");
         kafkaStreams.cleanUp();
         kafkaStreams.start();
         Thread.sleep(65000);
-        System.out.println("Shutting down the CountingWindowing and KTableJoins Example Application now");
+        LOG.info("Shutting down the CountingWindowing and KTableJoins Example Application now");
         kafkaStreams.close();
         MockDataProducer.shutdown();
     }

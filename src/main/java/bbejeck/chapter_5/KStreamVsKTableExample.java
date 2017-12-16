@@ -1,50 +1,54 @@
 package bbejeck.chapter_5;
 
 
-
-import static bbejeck.clients.producer.MockDataProducer.STOCK_TICKER_STREAM_TOPIC;
-import static bbejeck.clients.producer.MockDataProducer.STOCK_TICKER_TABLE_TOPIC;
-
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.StockTickerData;
 import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Printed;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
+import static bbejeck.clients.producer.MockDataProducer.STOCK_TICKER_STREAM_TOPIC;
+import static bbejeck.clients.producer.MockDataProducer.STOCK_TICKER_TABLE_TOPIC;
+
 public class KStreamVsKTableExample {
+
+    private static final Logger LOG = LoggerFactory.getLogger(KStreamVsKTableExample.class);
 
     public static void main(String[] args) throws Exception {
 
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
 
-        KStreamBuilder kStreamBuilder = new KStreamBuilder();
+        StreamsBuilder builder = new StreamsBuilder();
 
 
-        KTable<String, StockTickerData> stockTickerTable = kStreamBuilder.table(STOCK_TICKER_TABLE_TOPIC, "ticker-store");
-        KStream<String, StockTickerData> stockTickerStream = kStreamBuilder.stream(STOCK_TICKER_STREAM_TOPIC);
+        KTable<String, StockTickerData> stockTickerTable = builder.table(STOCK_TICKER_TABLE_TOPIC);
+        KStream<String, StockTickerData> stockTickerStream = builder.stream(STOCK_TICKER_STREAM_TOPIC);
 
-        stockTickerTable.toStream().print( "Stocks-KTable");
-        stockTickerStream.print( "Stocks-KStream");
+        stockTickerTable.toStream().print(Printed.<String, StockTickerData>toSysOut().withLabel("Stocks-KTable"));
+        stockTickerStream.print(Printed.<String, StockTickerData>toSysOut().withLabel( "Stocks-KStream"));
 
         int numberCompanies = 3;
         int iterations = 3;
 
         MockDataProducer.produceStockTickerData(numberCompanies, iterations);
 
-        KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder, streamsConfig);
-        System.out.println("KTable vs KStream output started");
+        KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfig);
+        LOG.info("KTable vs KStream output started");
         kafkaStreams.cleanUp();
         kafkaStreams.start();
         Thread.sleep(15000);
-        System.out.println("Shutting down KTable vs KStream Application now");
+        LOG.info("Shutting down KTable vs KStream Application now");
         kafkaStreams.close();
         MockDataProducer.shutdown();
 

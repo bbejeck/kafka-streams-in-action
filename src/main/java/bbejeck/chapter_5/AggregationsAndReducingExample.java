@@ -9,13 +9,19 @@ import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.ValueMapper;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.NumberFormat;
 import java.util.Comparator;
@@ -23,9 +29,13 @@ import java.util.Iterator;
 import java.util.Properties;
 
 import static bbejeck.clients.producer.MockDataProducer.STOCK_TRANSACTIONS_TOPIC;
-import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.EARLIEST;
+import static org.apache.kafka.streams.Topology.AutoOffsetReset.EARLIEST;
 
+
+@SuppressWarnings("unchecked")
 public class AggregationsAndReducingExample {
+
+    private static Logger LOG = LoggerFactory.getLogger(AggregationsAndReducingExample.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -55,31 +65,33 @@ public class AggregationsAndReducingExample {
             return builder.toString();
         };
 
-        KStreamBuilder kStreamBuilder = new KStreamBuilder();
+        StreamsBuilder builder = new StreamsBuilder();
 
-        KTable<String, ShareVolume> shareVolume = kStreamBuilder.stream(EARLIEST, stringSerde, stockTransactionSerde, STOCK_TRANSACTIONS_TOPIC)
+        KTable<String, ShareVolume> shareVolume = builder.stream(STOCK_TRANSACTIONS_TOPIC,
+                Consumed.with(stringSerde, stockTransactionSerde)
+                        .withOffsetResetPolicy(EARLIEST))
                 .mapValues(st -> ShareVolume.newBuilder(st).build())
-                .groupBy((k, v) -> v.getSymbol(), stringSerde, shareVolumeSerde)
-                .reduce(ShareVolume::reduce, "stock-transaction-reductions");
+                .groupBy((k, v) -> v.getSymbol(), Serialized.with(stringSerde, shareVolumeSerde))
+                .reduce(ShareVolume::reduce);
 
 
-        shareVolume.groupBy((k, v) -> KeyValue.pair(v.getIndustry(), v), stringSerde, shareVolumeSerde)
+        shareVolume.groupBy((k, v) -> KeyValue.pair(v.getIndustry(), v), Serialized.with(stringSerde, shareVolumeSerde))
                 .aggregate(() -> fixedQueue,
                         (k, v, agg) -> agg.add(v),
                         (k, v, agg) -> agg.remove(v),
-                        fixedSizePriorityQueueSerde,
-                        "volume-shares-industry-store")
+                        Materialized.with(stringSerde, fixedSizePriorityQueueSerde))
                 .mapValues(valueMapper)
-                //.to("stock-volume-by-company") //commented out for printing to console, un-comment to write to topic
-                .toStream().print("Stock volume by Industry");
+                .toStream().peek((k, v) -> LOG.info("Stock volume by industry {} {}", k, v))
+                .to("stock-volume-by-company", Produced.with(stringSerde, stringSerde));
 
 
-        KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder, streamsConfig);
+
+        KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfig);
         MockDataProducer.produceStockTransactions(15, 50, 25, false);
-        System.out.println("First Reduction and Aggregation Example Application Started");
+        LOG.info("First Reduction and Aggregation Example Application Started");
         kafkaStreams.start();
         Thread.sleep(65000);
-        System.out.println("Shutting down the Reduction and Aggregation Example Application now");
+        LOG.info("Shutting down the Reduction and Aggregation Example Application now");
         kafkaStreams.close();
         MockDataProducer.shutdown();
     }
