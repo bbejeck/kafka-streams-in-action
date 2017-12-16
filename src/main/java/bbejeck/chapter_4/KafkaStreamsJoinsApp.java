@@ -25,34 +25,33 @@ import bbejeck.util.serde.StreamsSerdes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.JoinWindows;
+import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
+import org.apache.kafka.streams.kstream.Printed;
 import org.apache.kafka.streams.kstream.ValueJoiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
-/**
- * User: Bill Bejeck
- * Date: 5/15/16
- * Time: 12:59 PM
- */
+
 @SuppressWarnings("unchecked")
 public class KafkaStreamsJoinsApp {
 
+    private static final Logger LOG = LoggerFactory.getLogger(KafkaStreamsJoinsApp.class);
 
     public static void main(String[] args) throws Exception {
 
-        //Used only to produce data for this application, not typical usage
-        MockDataProducer.producePurchaseData();
-
         StreamsConfig streamsConfig = new StreamsConfig(getProperties());
-        KStreamBuilder kStreamBuilder = new KStreamBuilder();
+        StreamsBuilder builder = new StreamsBuilder();
 
 
         Serde<Purchase> purchaseSerde = StreamsSerdes.PurchaseSerde();
@@ -70,7 +69,7 @@ public class KafkaStreamsJoinsApp {
         int COFFEE_PURCHASE = 0;
         int ELECTRONICS_PURCHASE = 1;
 
-        KStream<String, Purchase> transactionStream = kStreamBuilder.stream(Serdes.String(), purchaseSerde, "transactions").map(custIdCCMasking);
+        KStream<String, Purchase> transactionStream = builder.stream( "transactions", Consumed.with(Serdes.String(), purchaseSerde)).map(custIdCCMasking);
 
         KStream<String, Purchase>[] branchesStream = transactionStream.selectKey((k,v)-> v.getCustomerId()).branch(coffeePurchase, electronicPurchase);
 
@@ -83,17 +82,20 @@ public class KafkaStreamsJoinsApp {
         KStream<String, CorrelatedPurchase> joinedKStream = coffeeStream.join(electronicsStream,
                                                                               purchaseJoiner,
                                                                               twentyMinuteWindow,
-                                                                              stringSerde,
-                                                                              purchaseSerde,
-                                                                              purchaseSerde);
-        joinedKStream.print("joined KStream");
+                                                                              Joined.with(stringSerde,
+                                                                                          purchaseSerde,
+                                                                                          purchaseSerde));
 
+        joinedKStream.print(Printed.<String, CorrelatedPurchase>toSysOut().withLabel("joined KStream"));
 
-        System.out.println("Starting Join Examples");
-        KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder,streamsConfig);
+        // used only to produce data for this application, not typical usage
+        MockDataProducer.producePurchaseData();
+        
+        LOG.info("Starting Join Examples");
+        KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfig);
         kafkaStreams.start();
         Thread.sleep(65000);
-        System.out.println("Shutting down the Join Examples now");
+        LOG.info("Shutting down the Join Examples now");
         kafkaStreams.close();
         MockDataProducer.shutdown();
 

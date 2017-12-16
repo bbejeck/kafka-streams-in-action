@@ -16,28 +16,37 @@
 
 package bbejeck.chapter_4;
 
+import bbejeck.chapter_4.partitioner.RewardsStreamPartitioner;
+import bbejeck.chapter_4.transformer.PurchaseRewardTransformer;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
 import bbejeck.model.RewardAccumulator;
-import bbejeck.chapter_4.partitioner.RewardsStreamPartitioner;
 import bbejeck.util.serde.StreamsSerdes;
-import bbejeck.chapter_4.transformer.PurchaseRewardTransformer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
-import org.apache.kafka.streams.processor.StateStoreSupplier;
+import org.apache.kafka.streams.kstream.Printed;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
+import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
 
 public class ZMartKafkaStreamsAddStateApp {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ZMartKafkaStreamsAddStateApp.class);
 
     public static void main(String[] args) throws Exception {
         
@@ -48,52 +57,49 @@ public class ZMartKafkaStreamsAddStateApp {
         Serde<RewardAccumulator> rewardAccumulatorSerde = StreamsSerdes.RewardAccumulatorSerde();
         Serde<String> stringSerde = Serdes.String();
 
-        KStreamBuilder kStreamBuilder = new KStreamBuilder();
+        StreamsBuilder builder = new StreamsBuilder();
 
-
-
-        KStream<String,Purchase> purchaseKStream = kStreamBuilder.stream(stringSerde, purchaseSerde, "transactions")
+        KStream<String,Purchase> purchaseKStream = builder.stream( "transactions", Consumed.with(stringSerde, purchaseSerde))
                 .mapValues(p -> Purchase.builder(p).maskCreditCard().build());
 
         KStream<String, PurchasePattern> patternKStream = purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build());
 
-        //Commented out to emphasize the adding of state to the rewards program
-        //patternKStream.print(stringSerde,purchasePatternSerde,"patterns");
-        //patternKStream.to(stringSerde,purchasePatternSerde,"patterns");
+        patternKStream.print(Printed.<String, PurchasePattern>toSysOut().withLabel("patterns"));
+        patternKStream.to("patterns", Produced.with(stringSerde, purchasePatternSerde));
 
 
-        /**
-         *  Adding State to processor
-         */
 
+         // adding State to processor
         String rewardsStateStoreName = "rewardsPointsStore";
         RewardsStreamPartitioner streamPartitioner = new RewardsStreamPartitioner();
         PurchaseRewardTransformer transformer = new PurchaseRewardTransformer(rewardsStateStoreName);
 
-        StateStoreSupplier stateStoreSupplier = Stores.create(rewardsStateStoreName).withStringKeys().withIntegerValues().inMemory().build();
-        kStreamBuilder.addStateStore(stateStoreSupplier);
+        KeyValueBytesStoreSupplier storeSupplier = Stores.inMemoryKeyValueStore(rewardsStateStoreName);
+        StoreBuilder<KeyValueStore<String, Integer>> storeBuilder = Stores.keyValueStoreBuilder(storeSupplier, Serdes.String(), Serdes.Integer());
 
-        KStream<String, Purchase> transByCustomerStream = purchaseKStream.through(stringSerde, purchaseSerde, streamPartitioner, "customer_transactions");
+        builder.addStateStore(storeBuilder);
+
+        KStream<String, Purchase> transByCustomerStream = purchaseKStream.through( "customer_transactions", Produced.with(stringSerde, purchaseSerde, streamPartitioner));
 
 
         KStream<String, RewardAccumulator> statefulRewardAccumulator = transByCustomerStream.transformValues(() -> transformer, rewardsStateStoreName);
 
-        statefulRewardAccumulator.print(stringSerde, rewardAccumulatorSerde, "rewards");
-        statefulRewardAccumulator.to(stringSerde, rewardAccumulatorSerde, "rewards");
+        statefulRewardAccumulator.print(Printed.<String, RewardAccumulator>toSysOut().withLabel("rewards"));
+        statefulRewardAccumulator.to("rewards", Produced.with(stringSerde, rewardAccumulatorSerde));
 
 
 
-        //Used only to produce data for this application, not typical usage
+        // used only to produce data for this application, not typical usage
         MockDataProducer.producePurchaseData();
 
         
-        System.out.println("Starting Adding State Example");
-        KafkaStreams kafkaStreams = new KafkaStreams(kStreamBuilder,streamsConfig);
-        System.out.println("ZMart Adding State Application Started");
+        LOG.info("Starting Adding State Example");
+        KafkaStreams kafkaStreams = new KafkaStreams(builder.build(),streamsConfig);
+        LOG.info("ZMart Adding State Application Started");
         kafkaStreams.cleanUp();
         kafkaStreams.start();
         Thread.sleep(65000);
-        System.out.println("Shutting down the Add State Application now");
+        LOG.info("Shutting down the Add State Application now");
         kafkaStreams.close();
         MockDataProducer.shutdown();
     }
