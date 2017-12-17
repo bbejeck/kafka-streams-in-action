@@ -5,8 +5,8 @@ import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTransaction;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.kstream.TransformerSupplier;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 
@@ -33,7 +33,7 @@ public class StockPerformanceMultipleValuesTransformer implements Transformer<St
     public void init(ProcessorContext processorContext) {
         this.processorContext = processorContext;
         keyValueStore = (KeyValueStore) this.processorContext.getStateStore(stateStoreName);
-        this.processorContext.schedule(15000);
+        this.processorContext.schedule(15000, PunctuationType.STREAM_TIME, this::punctuate);
     }
 
     @Override
@@ -55,6 +55,7 @@ public class StockPerformanceMultipleValuesTransformer implements Transformer<St
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public KeyValue<String, List<KeyValue<String, StockPerformance>>> punctuate(long timestamp) {
         List<KeyValue<String, StockPerformance>> stockPerformanceList = new ArrayList<>();
         KeyValueIterator<String, StockPerformance> performanceIterator = keyValueStore.all();

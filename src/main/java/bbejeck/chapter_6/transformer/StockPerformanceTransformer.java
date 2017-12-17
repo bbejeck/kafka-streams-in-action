@@ -6,16 +6,11 @@ import bbejeck.model.StockPerformance;
 import bbejeck.model.StockTransaction;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.kstream.TransformerSupplier;
-import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.PunctuationType;
-import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 public class StockPerformanceTransformer implements Transformer<String, StockTransaction, KeyValue<String, StockPerformance>> {
 
@@ -56,6 +51,7 @@ public class StockPerformanceTransformer implements Transformer<String, StockTra
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public KeyValue<String, StockPerformance> punctuate(long l) {
         throw new UnsupportedOperationException("Should use the punctuate method on Punctuator");
     }

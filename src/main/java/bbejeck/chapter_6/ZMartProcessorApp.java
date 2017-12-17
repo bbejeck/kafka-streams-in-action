@@ -1,8 +1,8 @@
 package bbejeck.chapter_6;
 
 
-import bbejeck.chapter_6.processor.MapValueProcessor;
 import bbejeck.chapter_6.processor.KStreamPrinter;
+import bbejeck.chapter_6.processor.MapValueProcessor;
 import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.Purchase;
 import bbejeck.model.PurchasePattern;
@@ -15,9 +15,8 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.processor.TopologyBuilder;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
-import static org.apache.kafka.streams.processor.TopologyBuilder.AutoOffsetReset.*;
 
 import java.util.Properties;
 
@@ -37,13 +36,13 @@ public class ZMartProcessorApp {
         Serializer<PurchasePattern> patternSerializer = StreamsSerdes.PurchasePatternSerde().serializer();
         Serializer<RewardAccumulator> rewardsSerializer = StreamsSerdes.RewardAccumulatorSerde().serializer();
 
-        TopologyBuilder builder = new TopologyBuilder();
+        Topology topology = new Topology();
 
         MapValueProcessor<String, Purchase, Purchase> maskingProcessor = new MapValueProcessor<>(p -> Purchase.builder(p).maskCreditCard().build());
         MapValueProcessor<String, Purchase, RewardAccumulator> rewardProcessor = new MapValueProcessor<>(purchase -> RewardAccumulator.builder(purchase).build());
         MapValueProcessor<String, Purchase, PurchasePattern> patternProcessor = new MapValueProcessor<>(purchase -> PurchasePattern.builder(purchase).build());
 
-        builder.addSource("txn-source", stringDeserializer, purchaseDeserializer, "transactions")
+        topology.addSource("txn-source", stringDeserializer, purchaseDeserializer, "transactions")
                 .addProcessor("masking-processor", () -> maskingProcessor, "txn-source")
                 .addProcessor("rewards-processor", () -> rewardProcessor, "txn-source")
                 .addProcessor("patterns-processor", () -> patternProcessor, "txn-source")
@@ -52,11 +51,11 @@ public class ZMartProcessorApp {
                 .addSink("patterns-sink", "patterns", stringSerializer, patternSerializer, "patterns-processor");
 
 
-        builder.addProcessor("purchase-printer", new KStreamPrinter("purchase"), "masking-processor")
+        topology.addProcessor("purchase-printer", new KStreamPrinter("purchase"), "masking-processor")
                 .addProcessor("rewards-printer", new KStreamPrinter("rewards"), "rewards-processor")
                 .addProcessor("patterns-printer", new KStreamPrinter("pattens"), "patterns-processor");
 
-        KafkaStreams kafkaStreams = new KafkaStreams(builder, streamsConfig);
+        KafkaStreams kafkaStreams = new KafkaStreams(topology, streamsConfig);
         System.out.println("ZMart Processor App Started");
         kafkaStreams.start();
         Thread.sleep(35000);
