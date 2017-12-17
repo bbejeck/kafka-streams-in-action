@@ -29,9 +29,6 @@ public class StockPerformanceMetricsTransformer implements Transformer<String, S
         this.differentialThreshold = differentialThreshold;
     }
 
-    public StockPerformanceMetricsTransformer() {
-    }
-
     @Override
     @SuppressWarnings("unchecked")
     public void init(final ProcessorContext processorContext) {
@@ -91,6 +88,7 @@ public class StockPerformanceMetricsTransformer implements Transformer<String, S
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public KeyValue<String, StockPerformance> punctuate(long l) {
         throw new UnsupportedOperationException("Should not call punctuate");
     }

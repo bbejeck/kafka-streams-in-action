@@ -15,6 +15,7 @@ import org.apache.kafka.streams.Consumed;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
 import org.apache.kafka.streams.state.KeyValueStore;
@@ -53,7 +54,7 @@ public class StockPerformanceStreamsAndProcessorMetricsApplication {
         builder.stream("stock-transactions", Consumed.with(stringSerde, stockTransactionSerde))
                 .transform(() -> new StockPerformanceMetricsTransformer(stocksStateStore, differentialThreshold), stocksStateStore)
                 .peek((k, v)-> LOG.info("[stock-performance] key: {} value: {}" , k, v))
-                .to(stringSerde, stockPerformanceSerde, "stock-performance");
+                .to( "stock-performance", Produced.with(stringSerde, stockPerformanceSerde));
 
 
         KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), streamsConfig);
@@ -72,9 +73,9 @@ public class StockPerformanceStreamsAndProcessorMetricsApplication {
         for (Map.Entry<MetricName, ? extends Metric> metricNameEntry :kafkaStreams.metrics().entrySet()) {
             Metric metric = metricNameEntry.getValue();
             MetricName metricName = metricNameEntry.getKey();
-            if(metric.value() != 0.0 && metric.value() != Double.NEGATIVE_INFINITY) {
+            if(metric.metricValue().equals(0.0) && metric.metricValue().equals(Double.NEGATIVE_INFINITY)) {
                 LOG.info("MetricName {}", metricName.name());
-                LOG.info(" = {}", metric.value());
+                LOG.info(" = {}", metric.metricValue());
             }   
 
         }

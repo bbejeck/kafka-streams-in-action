@@ -36,6 +36,7 @@ import org.apache.kafka.streams.kstream.ForeachAction;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
+import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,7 @@ import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-
+    @SuppressWarnings("unchecked")
     public class ZMartKafkaStreamsAdvancedReqsMetricsApp {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZMartKafkaStreamsAdvancedReqsMetricsApp.class);
@@ -68,12 +69,12 @@ import java.util.concurrent.CountDownLatch;
 
         KStream<String, PurchasePattern> patternKStream = purchaseKStream.mapValues(purchase -> PurchasePattern.builder(purchase).build());
 
-        patternKStream.to(stringSerde,purchasePatternSerde,"patterns");
+        patternKStream.to("patterns", Produced.with(stringSerde,purchasePatternSerde));
 
 
         KStream<String, RewardAccumulator> rewardsKStream = purchaseKStream.mapValues(purchase -> RewardAccumulator.builder(purchase).build());
 
-        rewardsKStream.to(stringSerde,rewardAccumulatorSerde,"rewards");
+        rewardsKStream.to("rewards", Produced.with(stringSerde,rewardAccumulatorSerde));
 
 
         /**
@@ -84,7 +85,7 @@ import java.util.concurrent.CountDownLatch;
 
         KStream<Long, Purchase> filteredKStream = purchaseKStream.filter((key, purchase) -> purchase.getPrice() > 5.00).selectKey(purchaseDateAsKey);
 
-        filteredKStream.to(Serdes.Long(),purchaseSerde,"purchases");
+        filteredKStream.to("purchases", Produced.with(Serdes.Long(),purchaseSerde));
 
 
         /**
@@ -98,9 +99,9 @@ import java.util.concurrent.CountDownLatch;
 
         KStream<String, Purchase>[] kstreamByDept = purchaseKStream.branch(isCoffee, isElectronics);
 
-        kstreamByDept[coffee].to(stringSerde, purchaseSerde, "coffee");
+        kstreamByDept[coffee].to("coffee", Produced.with(stringSerde, purchaseSerde));
 
-        kstreamByDept[electronics].to(stringSerde, purchaseSerde, "electronics");
+        kstreamByDept[electronics].to("electronics", Produced.with(stringSerde, purchaseSerde));
 
 
 
