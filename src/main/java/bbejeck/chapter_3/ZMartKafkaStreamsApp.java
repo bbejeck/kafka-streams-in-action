@@ -71,7 +71,7 @@ public class ZMartKafkaStreamsApp {
 
 
         purchaseKStream.print(Printed.<String, Purchase>toSysOut().withLabel("purchases"));
-        purchaseKStream.to("purchases", Produced.with(Serdes.String(),purchaseSerde));
+        purchaseKStream.to("purchases", Produced.with(stringSerde,purchaseSerde));
 
 
         // used only to produce data for this application, not typical usage
