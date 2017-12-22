@@ -7,10 +7,12 @@ import bbejeck.clients.producer.MockDataProducer;
 import bbejeck.model.BeerPurchase;
 import bbejeck.util.Topics;
 import bbejeck.util.serializer.JsonDeserializer;
+import bbejeck.util.serializer.JsonSerializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
@@ -30,6 +32,8 @@ public class PopsHopsApplication {
         Deserializer<BeerPurchase> beerPurchaseDeserializer = new JsonDeserializer<>(BeerPurchase.class);
         Serde<String> stringSerde = Serdes.String();
         Deserializer<String> stringDeserializer = stringSerde.deserializer();
+        Serializer<String> stringSerializer = stringSerde.serializer();
+        Serializer<BeerPurchase> beerPurchaseSerializer = new JsonSerializer<>();
 
         Topology toplogy = new Topology();
 
@@ -52,7 +56,7 @@ public class PopsHopsApplication {
                               purchaseSourceNodeName);
 
                 //Uncomment these two lines and comment out the printer lines for writing to topics
-                //.addSink(internationalSalesSink,"international-sales", stringSerializer, beerPurchaseSerializer, purchaseProcessor)
+               // .addSink(internationalSalesSink,"international-sales", stringSerializer, beerPurchaseSerializer, purchaseProcessor)
                // .addSink(domesticSalesSink,"domestic-sales", stringSerializer, beerPurchaseSerializer, purchaseProcessor);
 
         //You'll have to comment these lines out if you want to write to topics as they have the same node names

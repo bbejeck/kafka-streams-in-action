@@ -43,12 +43,12 @@ public class StockPerformanceApplication {
         double differentialThreshold = 0.02;
 
         KeyValueBytesStoreSupplier storeSupplier = Stores.inMemoryKeyValueStore(stocksStateStore);
-        StoreBuilder<KeyValueStore<String, StockPerformance>> builder = Stores.keyValueStoreBuilder(storeSupplier, Serdes.String(), stockPerformanceSerde);
+        StoreBuilder<KeyValueStore<String, StockPerformance>> storeBuilder = Stores.keyValueStoreBuilder(storeSupplier, Serdes.String(), stockPerformanceSerde);
 
 
         topology.addSource("stocks-source", stringDeserializer, stockTransactionDeserializer,"stock-transactions")
                 .addProcessor("stocks-processor", () -> new StockPerformanceProcessor(stocksStateStore, differentialThreshold), "stocks-source")
-                .addStateStore(builder,"stocks-processor")
+                .addStateStore(storeBuilder,"stocks-processor")
                 .addSink("stocks-sink", "stock-performance", stringSerializer, stockPerformanceSerializer, "stocks-processor");
 
 

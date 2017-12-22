@@ -57,7 +57,7 @@ public class CoGroupingListeningExampleApplication {
         changeLogConfigs.put("retention.ms","120000" );
         changeLogConfigs.put("cleanup.policy", "compact,delete");
 
-        KeyValueBytesStoreSupplier storeSupplier = Stores.inMemoryKeyValueStore(TUPLE_STORE_NAME);
+        KeyValueBytesStoreSupplier storeSupplier = Stores.persistentKeyValueStore(TUPLE_STORE_NAME);
         StoreBuilder<KeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>>> builder = Stores.keyValueStoreBuilder(storeSupplier, Serdes.String(), eventPerformanceTuple);
 
 

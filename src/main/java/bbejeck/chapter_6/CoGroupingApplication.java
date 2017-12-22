@@ -54,8 +54,8 @@ public class CoGroupingApplication {
         changeLogConfigs.put("cleanup.policy", "compact,delete");
 
 
-        KeyValueBytesStoreSupplier storeSupplier = Stores.inMemoryKeyValueStore(TUPLE_STORE_NAME);
-        StoreBuilder<KeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>>> builder =
+        KeyValueBytesStoreSupplier storeSupplier = Stores.persistentKeyValueStore(TUPLE_STORE_NAME);
+        StoreBuilder<KeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>>> storeBuilder =
                 Stores.keyValueStoreBuilder(storeSupplier,
                         Serdes.String(),
                         eventPerformanceTuple).withLoggingEnabled(changeLogConfigs);
@@ -65,7 +65,7 @@ public class CoGroupingApplication {
                 .addProcessor("Txn-Processor", StockTransactionProcessor::new, "Txn-Source")
                 .addProcessor("Events-Processor", ClickEventProcessor::new, "Events-Source")
                 .addProcessor("CoGrouping-Processor", AggregatingProcessor::new, "Txn-Processor", "Events-Processor")
-                .addStateStore(builder, "CoGrouping-Processor")
+                .addStateStore(storeBuilder, "CoGrouping-Processor")
                 .addSink("Tuple-Sink", "cogrouped-results", stringSerializer, tupleSerializer, "CoGrouping-Processor");
 
         topology.addProcessor("Print", new KStreamPrinter("Co-Grouping"), "CoGrouping-Processor");

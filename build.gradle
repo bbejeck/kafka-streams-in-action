@@ -91,7 +91,7 @@ task runCoGrouping_Chapter_6(type: JavaExec) {
     main = "bbejeck.chapter_6.CoGroupingApplication"
 }
 
-task runCoGroupinStateRetoreListener_Chapter_7(type: JavaExec) {
+task runCoGroupingStateRestoreListener_Chapter_7(type: JavaExec) {
     classpath sourceSets.main.runtimeClasspath
     main = "bbejeck.chapter_7.CoGroupingListeningExampleApplication"
 }
