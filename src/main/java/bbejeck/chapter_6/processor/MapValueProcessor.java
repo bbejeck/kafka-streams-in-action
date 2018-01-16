@@ -5,9 +5,10 @@ import org.apache.kafka.streams.processor.AbstractProcessor;
 import java.util.function.Function;
 
 
-//Comment about how value mapper needs to be stateless
+
 public class MapValueProcessor<K, V, VR> extends AbstractProcessor<K, V> {
 
+    // It is assumed the valueMapper is stateless
     private Function<V, VR> valueMapper;
 
     public MapValueProcessor(Function<V, VR> valueMapper) {
