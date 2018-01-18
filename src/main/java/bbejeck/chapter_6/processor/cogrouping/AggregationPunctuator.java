@@ -28,7 +28,7 @@ public class AggregationPunctuator implements Punctuator {
 
         while (iterator.hasNext()) {
             KeyValue<String, Tuple<List<ClickEvent>, List<StockTransaction>>> cogrouping = iterator.next();
-
+            // if either list contains values forward results
             if (cogrouping.value != null && (!cogrouping.value._1.isEmpty() || !cogrouping.value._2.isEmpty())) {
 
                 context.forward(cogrouping.key, cogrouping.value);
