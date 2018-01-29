@@ -72,7 +72,6 @@ public class ZMartKafkaStreamsAddStateApp {
          // adding State to processor
         String rewardsStateStoreName = "rewardsPointsStore";
         RewardsStreamPartitioner streamPartitioner = new RewardsStreamPartitioner();
-        PurchaseRewardTransformer transformer = new PurchaseRewardTransformer(rewardsStateStoreName);
 
         KeyValueBytesStoreSupplier storeSupplier = Stores.inMemoryKeyValueStore(rewardsStateStoreName);
         StoreBuilder<KeyValueStore<String, Integer>> storeBuilder = Stores.keyValueStoreBuilder(storeSupplier, Serdes.String(), Serdes.Integer());
@@ -82,7 +81,8 @@ public class ZMartKafkaStreamsAddStateApp {
         KStream<String, Purchase> transByCustomerStream = purchaseKStream.through( "customer_transactions", Produced.with(stringSerde, purchaseSerde, streamPartitioner));
 
 
-        KStream<String, RewardAccumulator> statefulRewardAccumulator = transByCustomerStream.transformValues(() -> transformer, rewardsStateStoreName);
+        KStream<String, RewardAccumulator> statefulRewardAccumulator = transByCustomerStream.transformValues(() ->  new PurchaseRewardTransformer(rewardsStateStoreName),
+                rewardsStateStoreName);
 
         statefulRewardAccumulator.print(Printed.<String, RewardAccumulator>toSysOut().withLabel("rewards"));
         statefulRewardAccumulator.to("rewards", Produced.with(stringSerde, rewardAccumulatorSerde));

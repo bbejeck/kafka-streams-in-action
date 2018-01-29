@@ -10,14 +10,15 @@ import org.apache.kafka.streams.processor.Punctuator;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class AggregationPunctuator implements Punctuator {
+public class CogroupingPunctuator implements Punctuator {
 
     private final KeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>> tupleStore;
     private final ProcessorContext context;
 
-    public AggregationPunctuator(KeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>> tupleStore, ProcessorContext context) {
+    public CogroupingPunctuator(KeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>> tupleStore, ProcessorContext context) {
         this.tupleStore = tupleStore;
         this.context = context;
     }
@@ -27,13 +28,17 @@ public class AggregationPunctuator implements Punctuator {
         KeyValueIterator<String, Tuple<List<ClickEvent>, List<StockTransaction>>> iterator = tupleStore.all();
 
         while (iterator.hasNext()) {
-            KeyValue<String, Tuple<List<ClickEvent>, List<StockTransaction>>> cogrouping = iterator.next();
+            KeyValue<String, Tuple<List<ClickEvent>, List<StockTransaction>>> cogrouped = iterator.next();
             // if either list contains values forward results
-            if (cogrouping.value != null && (!cogrouping.value._1.isEmpty() || !cogrouping.value._2.isEmpty())) {
+            if (cogrouped.value != null && (!cogrouped.value._1.isEmpty() || !cogrouped.value._2.isEmpty())) {
+                List<ClickEvent> clickEvents = new ArrayList<>(cogrouped.value._1);
+                List<StockTransaction> stockTransactions = new ArrayList<>(cogrouped.value._2);
 
-                context.forward(cogrouping.key, cogrouping.value);
-                // delete semantics for kafka streams stores, null value indicates deletion
-                tupleStore.put(cogrouping.key, null);
+                context.forward(cogrouped.key, Tuple.of(clickEvents, stockTransactions));
+                // empty out the current cogrouped results
+                cogrouped.value._1.clear();
+                cogrouped.value._2.clear();
+                tupleStore.put(cogrouped.key, cogrouped.value);
             }
         }
         iterator.close();

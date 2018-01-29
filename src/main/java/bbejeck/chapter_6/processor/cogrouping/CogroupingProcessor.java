@@ -6,18 +6,19 @@ import bbejeck.model.StockTransaction;
 import bbejeck.util.collection.Tuple;
 import org.apache.kafka.streams.processor.AbstractProcessor;
 import org.apache.kafka.streams.processor.ProcessorContext;
-import static org.apache.kafka.streams.processor.PunctuationType.*;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.apache.kafka.streams.processor.PunctuationType.STREAM_TIME;
 
 /**
  * User: Bill Bejeck
  * Date: 8/12/17
  * Time: 10:54 AM
  */
-public class AggregatingProcessor extends AbstractProcessor<String, Tuple<ClickEvent,StockTransaction>> {
+public class CogroupingProcessor extends AbstractProcessor<String, Tuple<ClickEvent,StockTransaction>> {
 
     private KeyValueStore<String, Tuple<List<ClickEvent>,List<StockTransaction>>> tupleStore;
     public static final  String TUPLE_STORE_NAME = "tupleCoGroupStore";
@@ -28,7 +29,7 @@ public class AggregatingProcessor extends AbstractProcessor<String, Tuple<ClickE
     public void init(ProcessorContext context) {
         super.init(context);
         tupleStore = (KeyValueStore) context().getStateStore(TUPLE_STORE_NAME);
-        AggregationPunctuator punctuator = new AggregationPunctuator(tupleStore, context());
+        CogroupingPunctuator punctuator = new CogroupingPunctuator(tupleStore, context());
         context().schedule(15000L, STREAM_TIME, punctuator);
     }
 

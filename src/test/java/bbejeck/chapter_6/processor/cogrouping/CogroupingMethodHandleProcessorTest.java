@@ -13,16 +13,16 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import static bbejeck.chapter_6.processor.cogrouping.AggregatingMethodHandleProcessor.TUPLE_STORE_NAME;
+import static bbejeck.chapter_6.processor.cogrouping.CogroupingMethodHandleProcessor.TUPLE_STORE_NAME;
 import static org.apache.kafka.streams.processor.PunctuationType.STREAM_TIME;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class AggregatingMethodHandleProcessorTest {
+public class CogroupingMethodHandleProcessorTest {
 
     private ProcessorContext processorContext = mock(ProcessorContext.class);
-    private AggregatingMethodHandleProcessor processor = new AggregatingMethodHandleProcessor();
+    private CogroupingMethodHandleProcessor processor = new CogroupingMethodHandleProcessor();
     private MockKeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>> keyValueStore = new MockKeyValueStore<>();
     private ClickEvent clickEvent = new ClickEvent("ABC", "http://somelink.com", Instant.now());
     private StockTransaction transaction = StockTransaction.newBuilder().withSymbol("ABC").build();

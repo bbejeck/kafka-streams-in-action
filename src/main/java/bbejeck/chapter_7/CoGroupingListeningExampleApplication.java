@@ -2,8 +2,8 @@ package bbejeck.chapter_7;
 
 
 import bbejeck.chapter_6.processor.KStreamPrinter;
-import bbejeck.chapter_6.processor.cogrouping.AggregatingProcessor;
 import bbejeck.chapter_6.processor.cogrouping.ClickEventProcessor;
+import bbejeck.chapter_6.processor.cogrouping.CogroupingProcessor;
 import bbejeck.chapter_6.processor.cogrouping.StockTransactionProcessor;
 import bbejeck.chapter_7.restore.LoggingStateRestoreListener;
 import bbejeck.clients.producer.MockDataProducer;
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static bbejeck.chapter_6.processor.cogrouping.AggregatingProcessor.TUPLE_STORE_NAME;
+import static bbejeck.chapter_6.processor.cogrouping.CogroupingProcessor.TUPLE_STORE_NAME;
 
 public class CoGroupingListeningExampleApplication {
 
@@ -66,7 +66,7 @@ public class CoGroupingListeningExampleApplication {
                 .addSource( "Events-Source", stringDeserializer, clickEventDeserializer, "events")
                 .addProcessor("Txn-Processor", StockTransactionProcessor::new, "Txn-Source")
                 .addProcessor("Events-Processor", ClickEventProcessor::new, "Events-Source")
-                .addProcessor("CoGrouping-Processor", AggregatingProcessor::new, "Txn-Processor", "Events-Processor")
+                .addProcessor("CoGrouping-Processor", CogroupingProcessor::new, "Txn-Processor", "Events-Processor")
                 .addStateStore(builder.withLoggingEnabled(changeLogConfigs), "CoGrouping-Processor")
                 .addSink("Tuple-Sink", "cogrouped-results", stringSerializer, tupleSerializer, "CoGrouping-Processor");
 

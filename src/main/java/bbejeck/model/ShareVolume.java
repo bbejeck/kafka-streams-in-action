@@ -39,7 +39,7 @@ public class ShareVolume {
                 '}';
     }
 
-    public static ShareVolume reduce(ShareVolume csv1, ShareVolume csv2) {
+    public static ShareVolume sum(ShareVolume csv1, ShareVolume csv2) {
         Builder builder = newBuilder(csv1);
         builder.shares = csv1.shares + csv2.shares;
         return builder.build();

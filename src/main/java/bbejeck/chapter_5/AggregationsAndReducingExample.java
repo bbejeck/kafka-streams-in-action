@@ -72,7 +72,7 @@ public class AggregationsAndReducingExample {
                         .withOffsetResetPolicy(EARLIEST))
                 .mapValues(st -> ShareVolume.newBuilder(st).build())
                 .groupBy((k, v) -> v.getSymbol(), Serialized.with(stringSerde, shareVolumeSerde))
-                .reduce(ShareVolume::reduce);
+                .reduce(ShareVolume::sum);
 
 
         shareVolume.groupBy((k, v) -> KeyValue.pair(v.getIndustry(), v), Serialized.with(stringSerde, shareVolumeSerde))

@@ -18,7 +18,7 @@ import static org.apache.kafka.streams.processor.PunctuationType.WALL_CLOCK_TIME
  * Date: 8/12/17
  * Time: 10:54 AM
  */
-public class AggregatingSystemTimeProcessor extends AbstractProcessor<String, Tuple<ClickEvent,StockTransaction>> {
+public class CogroupingSystemTimeProcessor extends AbstractProcessor<String, Tuple<ClickEvent,StockTransaction>> {
 
     private KeyValueStore<String, Tuple<List<ClickEvent>,List<StockTransaction>>> tupleStore;
     public static final  String TUPLE_STORE_NAME = "tupleCoGroupStore";
@@ -29,7 +29,7 @@ public class AggregatingSystemTimeProcessor extends AbstractProcessor<String, Tu
     public void init(ProcessorContext context) {
         super.init(context);
         tupleStore = (KeyValueStore) context().getStateStore(TUPLE_STORE_NAME);
-        AggregationPunctuator punctuator = new AggregationPunctuator(tupleStore, context());
+        CogroupingPunctuator punctuator = new CogroupingPunctuator(tupleStore, context());
         context().schedule(15000L, WALL_CLOCK_TIME, punctuator);
     }
 

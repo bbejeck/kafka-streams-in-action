@@ -17,10 +17,10 @@ import static org.apache.kafka.streams.processor.PunctuationType.STREAM_TIME;
 
 /**
  * This class provides the same functionality as the
- * {@link AggregatingProcessor} but the {@link org.apache.kafka.streams.processor.Punctuator}
+ * {@link CogroupingProcessor} but the {@link org.apache.kafka.streams.processor.Punctuator}
  * is provided via a method handle versus a concrete instance.
  */
-public class AggregatingMethodHandleProcessor extends AbstractProcessor<String, Tuple<ClickEvent,StockTransaction>> {
+public class CogroupingMethodHandleProcessor extends AbstractProcessor<String, Tuple<ClickEvent,StockTransaction>> {
 
     private KeyValueStore<String, Tuple<List<ClickEvent>,List<StockTransaction>>> tupleStore;
     public static final  String TUPLE_STORE_NAME = "tupleCoGroupStore";
