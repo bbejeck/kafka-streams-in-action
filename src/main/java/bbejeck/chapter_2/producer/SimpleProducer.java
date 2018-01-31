@@ -1,12 +1,14 @@
 package bbejeck.chapter_2.producer;
 
 import bbejeck.chapter_2.partitioner.PurchaseKeyPartitioner;
+import bbejeck.model.PurchaseKey;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
+import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.Future;
 
@@ -32,17 +34,19 @@ public class SimpleProducer {
         //This line in for demonstration purposes
         properties.put("partitioner.class", PurchaseKeyPartitioner.class.getName());
 
+        PurchaseKey key = new PurchaseKey("12334568", new Date());
 
-        Producer<String, String> producer = new KafkaProducer<>(properties);
-        ProducerRecord<String, String>  record = new ProducerRecord<>("some-topic", "key", "value");
+        try(Producer<PurchaseKey, String> producer = new KafkaProducer<>(properties)) {
+            ProducerRecord<PurchaseKey, String> record = new ProducerRecord<>("some-topic", key, "value");
 
-        Callback callback = (metadata, exception) -> {
-            if (exception != null) {
-                exception.printStackTrace();
-            }
-        };
+            Callback callback = (metadata, exception) -> {
+                if (exception != null) {
+                    exception.printStackTrace();
+                }
+            };
 
-        Future<RecordMetadata> sendFuture = producer.send(record, callback);
+            Future<RecordMetadata> sendFuture = producer.send(record, callback);
+        }
 
     }
 
