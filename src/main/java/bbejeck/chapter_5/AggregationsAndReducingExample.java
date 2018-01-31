@@ -48,7 +48,7 @@ public class AggregationsAndReducingExample {
         Serde<FixedSizePriorityQueue> fixedSizePriorityQueueSerde = StreamsSerdes.FixedSizePriorityQueueSerde();
         NumberFormat numberFormat = NumberFormat.getInstance();
         
-        Comparator<ShareVolume> comparator = (st1, st2) -> st2.getShares() - st1.getShares();
+        Comparator<ShareVolume> comparator = (sv1, sv2) -> sv2.getShares() - sv1.getShares();
         FixedSizePriorityQueue<ShareVolume> fixedQueue = new FixedSizePriorityQueue<>(comparator, 5);
 
         ValueMapper<FixedSizePriorityQueue, String> valueMapper = fpq -> {
