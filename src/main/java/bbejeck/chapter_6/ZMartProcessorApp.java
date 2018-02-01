@@ -38,14 +38,13 @@ public class ZMartProcessorApp {
 
         Topology topology = new Topology();
 
-        MapValueProcessor<String, Purchase, Purchase> maskingProcessor = new MapValueProcessor<>(p -> Purchase.builder(p).maskCreditCard().build());
-        MapValueProcessor<String, Purchase, RewardAccumulator> rewardProcessor = new MapValueProcessor<>(purchase -> RewardAccumulator.builder(purchase).build());
-        MapValueProcessor<String, Purchase, PurchasePattern> patternProcessor = new MapValueProcessor<>(purchase -> PurchasePattern.builder(purchase).build());
-
         topology.addSource("txn-source", stringDeserializer, purchaseDeserializer, "transactions")
-                .addProcessor("masking-processor", () -> maskingProcessor, "txn-source")
-                .addProcessor("rewards-processor", () -> rewardProcessor, "txn-source")
-                .addProcessor("patterns-processor", () -> patternProcessor, "txn-source")
+                .addProcessor("masking-processor",
+                        () -> new MapValueProcessor<String, Purchase, Purchase>(p -> Purchase.builder(p).maskCreditCard().build()), "txn-source")
+                .addProcessor("rewards-processor",
+                        () -> new MapValueProcessor<String, Purchase, RewardAccumulator>(purchase -> RewardAccumulator.builder(purchase).build()), "txn-source")
+                .addProcessor("patterns-processor",
+                        () -> new MapValueProcessor<String, Purchase, PurchasePattern>(purchase -> PurchasePattern.builder(purchase).build()), "txn-source")
                 .addSink("purchase-sink", "purchases", stringSerializer, purchaseSerializer, "masking-processor")
                 .addSink("rewards-sink", "rewards", stringSerializer, rewardsSerializer, "rewards-processor")
                 .addSink("patterns-sink", "patterns", stringSerializer, patternSerializer, "patterns-processor");
