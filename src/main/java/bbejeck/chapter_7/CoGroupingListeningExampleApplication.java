@@ -85,6 +85,7 @@ public class CoGroupingListeningExampleApplication {
         kafkaStreams.setStateListener((newState, oldState) -> {
            if (oldState == KafkaStreams.State.REBALANCING && newState== KafkaStreams.State.RUNNING) {
                LOG.info("Topology Layout {}", topology.describe());
+               LOG.info("Thread metadata {}", kafkaStreams.localThreadsMetadata());
            }
         });
 
@@ -109,7 +110,7 @@ public class CoGroupingListeningExampleApplication {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"latest");
         props.put(StreamsConfig.REPLICATION_FACTOR_CONFIG, 1);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);
         return props;
     }

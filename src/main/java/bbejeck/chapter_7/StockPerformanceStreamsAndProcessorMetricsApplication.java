@@ -73,7 +73,7 @@ public class StockPerformanceStreamsAndProcessorMetricsApplication {
         for (Map.Entry<MetricName, ? extends Metric> metricNameEntry :kafkaStreams.metrics().entrySet()) {
             Metric metric = metricNameEntry.getValue();
             MetricName metricName = metricNameEntry.getKey();
-            if(metric.metricValue().equals(0.0) && metric.metricValue().equals(Double.NEGATIVE_INFINITY)) {
+            if(!metric.metricValue().equals(0.0) && !metric.metricValue().equals(Double.NEGATIVE_INFINITY)) {
                 LOG.info("MetricName {}", metricName.name());
                 LOG.info(" = {}", metric.metricValue());
             }   
