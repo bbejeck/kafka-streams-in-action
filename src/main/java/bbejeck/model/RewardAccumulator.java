@@ -99,7 +99,7 @@ public class RewardAccumulator {
     public static final class Builder {
         private String customerId;
         private double purchaseTotal;
-        private int daysSinceLastVisit;
+        private int daysFromLastPurchase;
         private int rewardPoints;
 
         private Builder(Purchase purchase){
