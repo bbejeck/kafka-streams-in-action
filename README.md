@@ -1,14 +1,10 @@
 ### Source Code for Kafka Streams in Action
 
-#### Chapter 9 updates
+Welcome to the source code for Kafka Streams in Action.  Here you'll find directions for running the example code from the book.  If any of the examples fail to produce output make sure
+you have created the topics needed.  For those running on Max/*nix there is the `create-topic.sh` file in the `bin` directory which creates all required topics
+ahead of time.
 
-1. Kafka and Kafka Streams are now at version 1.0!
-2. With the official release of 1.0, I've been able to remove the kafka-streams and kafka-clients jar files from the project and the related test jar
-files as well.
-5. As before, chapter 6 forward uses the new Kafka Streams 1.0 API, chapters 3-5 will get updated before publication to the new API.
-There will still be some use of deprecated classes and methods for now, but before final publication all code and accompanying examples in the text will be updated to the 1.0 version.
-6. Logging as been added to the application and there is now a logs directory with logs for the application and various examples. Eventually the all code in the project
-will get migrated to logging vs sysout.
+If you have any issues with the examples you can post a question in the Manning Authors forum at https://forums.manning.com/forums/kafka-streams-in-action
 
 #### Instructions for Chapter 9 Examples
 
@@ -43,6 +39,12 @@ file (`findata.mv.db`) stored in your home directory.
 To prepare for the interactive queries, you'll need to increase the partitions on the `stock-transactions` topic to two partitions with the following command:
 `<kafka base dir>/bin/kafka-topics.sh --alter --partitions 2 --zookeeper localhost:2181 --topic stock-transactions`
 
+**_NOTE_**
+
+The Interactive Query example makes use of the `stock-transactions` topic which is used in previous examples.  If you go back to any of the
+earlier examples that use the `stock-transactions` topic, you'll need to delete it topic an create it again.
+ 
+
 The to run the interactive query examples you'll execute 3 commands, each in a separate terminal, from the base directory of the source code install:
 
 1. `./gradlew runProducerInteractiveQueries` runs the producer sending
@@ -65,7 +67,7 @@ This will launch a web application that updates results for all parameters over 
 
 Again it does not matter which port you point to you'll get the same results.
 
-#### Previous Updates
+#### General Notes on Examples
 
 Here are some notes regarding the source code:
 
@@ -148,7 +150,7 @@ I did'nt miss adding a print statement.
 To run any of the example programs, I recommend running them through the set gradle tasks.  Remember if you are
 windows use gradlew.bat instead  ./gradlew to run the program.  All the 
 example programs are located in the build.gradle file.  For your convenience here are the commands to run sample programs
-we have so far:
+for chapters 1-7:
 
 1. ./gradlew runYellingApp (Kafka Streams version of Hello World)
 2. ./gradlew runZmartFirstAppChapter_3
