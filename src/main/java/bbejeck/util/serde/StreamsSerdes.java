@@ -4,6 +4,7 @@ import bbejeck.collectors.FixedSizePriorityQueue;
 import bbejeck.model.ClickEvent;
 import bbejeck.model.CustomerTransactions;
 import bbejeck.model.Purchase;
+import bbejeck.model.PurchaseKey;
 import bbejeck.model.PurchasePattern;
 import bbejeck.model.RewardAccumulator;
 import bbejeck.model.ShareVolume;
@@ -80,6 +81,17 @@ public class StreamsSerdes {
 
     public static Serde<List<StockTransaction>> TransactionsListSerde() {
         return  new TransactionsListSerde();
+    }
+
+
+    public static Serde<PurchaseKey> purchaseKeySerde() {
+        return new PurchaseKeySerde();
+    }
+
+    public static final class PurchaseKeySerde extends WrapperSerde<PurchaseKey> {
+        public PurchaseKeySerde(){
+            super(new JsonSerializer<>(), new JsonDeserializer<>(PurchaseKey.class) );
+        }
     }
 
     public static final class PurchasePatternsSerde extends WrapperSerde<PurchasePattern> {
