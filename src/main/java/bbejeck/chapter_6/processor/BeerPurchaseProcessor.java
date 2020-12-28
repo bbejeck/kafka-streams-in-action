@@ -6,36 +6,40 @@ import org.apache.kafka.streams.processor.AbstractProcessor;
 
 import java.text.DecimalFormat;
 
-import static bbejeck.model.Currency.DOLLARS;
-
-
 public class BeerPurchaseProcessor extends AbstractProcessor<String, BeerPurchase> {
 
-    private String domesticSalesNode;
-    private String internationalSalesNode;
+  private static DecimalFormat DECIMAL_FORMAT = new DecimalFormat("###.##");
 
-    public BeerPurchaseProcessor(String domesticSalesNode, String internationalSalesNode) {
-        this.domesticSalesNode = domesticSalesNode;
-        this.internationalSalesNode = internationalSalesNode;
+  private String domesticSalesNode;         // the node can be a processor or a sink.
+  private String internationalSalesNode;    // the node can be a processor or a sink.
+
+  public BeerPurchaseProcessor(String domesticSalesNode, String internationalSalesNode) {
+    this.domesticSalesNode = domesticSalesNode;
+    this.internationalSalesNode = internationalSalesNode;
+  }
+
+  @Override
+  public void process(String key, BeerPurchase beerPurchase) {
+
+    Currency transactionCurrency = beerPurchase.getCurrency();
+    if (transactionCurrency != Currency.DOLLARS) {
+      BeerPurchase dollarBeerPurchase = this.convertToDollarPurchase(beerPurchase);
+      context().forward(key, dollarBeerPurchase, internationalSalesNode);
+    } else {
+      context().forward(key, beerPurchase, domesticSalesNode);
     }
+  }
 
-    @Override
-    public void process(String key, BeerPurchase beerPurchase) {
+  private BeerPurchase convertToDollarPurchase(BeerPurchase beerPurchase) {
 
-        Currency transactionCurrency = beerPurchase.getCurrency();
-        if (transactionCurrency != DOLLARS) {
-            BeerPurchase dollarBeerPurchase;
-            BeerPurchase.Builder builder = BeerPurchase.newBuilder(beerPurchase);
-            double internationalSaleAmount = beerPurchase.getTotalSale();
-            String pattern = "###.##";
-            DecimalFormat decimalFormat = new DecimalFormat(pattern);
-            builder.currency(DOLLARS);
-            builder.totalSale(Double.parseDouble(decimalFormat.format(transactionCurrency.convertToDollars(internationalSaleAmount))));
-            dollarBeerPurchase = builder.build();
-            context().forward(key, dollarBeerPurchase, internationalSalesNode);
-        } else {
-            context().forward(key, beerPurchase, domesticSalesNode);
-        }
+    double totalSaleInDollar = beerPurchase.getCurrency().convertToDollars(beerPurchase.getTotalSale());
+    double formattedTotalSaleInDollar = Double.parseDouble(DECIMAL_FORMAT.format(totalSaleInDollar));
 
-    }
+    return BeerPurchase.builder()
+        .numberCases(beerPurchase.getNumberCases())
+        .beerType(beerPurchase.getBeerType())
+        .currency(Currency.DOLLARS)
+        .totalSale(formattedTotalSaleInDollar)
+        .build();
+  }
 }

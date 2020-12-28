@@ -1,6 +1,7 @@
 package bbejeck.chapter_6.processor.cogrouping;
 
 import bbejeck.MockKeyValueStore;
+import bbejeck.chapter_6.processor.cogrouping.other_options_not_used.CogroupingMethodHandleProcessor;
 import bbejeck.model.ClickEvent;
 import bbejeck.model.StockTransaction;
 import bbejeck.util.collection.Tuple;
@@ -13,7 +14,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import static bbejeck.chapter_6.processor.cogrouping.CogroupingMethodHandleProcessor.TUPLE_STORE_NAME;
+import static bbejeck.chapter_6.processor.cogrouping.other_options_not_used.CogroupingMethodHandleProcessor.TUPLE_STORE_NAME;
 import static org.apache.kafka.streams.processor.PunctuationType.STREAM_TIME;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;

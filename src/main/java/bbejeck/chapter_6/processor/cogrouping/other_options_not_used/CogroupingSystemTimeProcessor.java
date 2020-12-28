@@ -1,5 +1,6 @@
-package bbejeck.chapter_6.processor.cogrouping;
+package bbejeck.chapter_6.processor.cogrouping.other_options_not_used;
 
+import bbejeck.chapter_6.processor.cogrouping.CogroupingPunctuator;
 import bbejeck.model.ClickEvent;
 import bbejeck.model.StockTransaction;
 import bbejeck.util.collection.Tuple;
@@ -12,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** User: Bill Bejeck Date: 8/12/17 Time: 10:54 AM */
-public class CogroupingProcessor
+public class CogroupingSystemTimeProcessor
     extends AbstractProcessor<String, Tuple<ClickEvent, StockTransaction>> {
 
   private KeyValueStore<String, Tuple<List<ClickEvent>, List<StockTransaction>>> tupleStore;
@@ -24,7 +25,7 @@ public class CogroupingProcessor
     super.init(context);
     tupleStore = (KeyValueStore) context().getStateStore(TUPLE_STORE_NAME);
     CogroupingPunctuator punctuator = new CogroupingPunctuator(tupleStore, context());
-    context().schedule(15000L, PunctuationType.STREAM_TIME, punctuator);
+    context().schedule(15000L, PunctuationType.WALL_CLOCK_TIME, punctuator);
   }
 
   @Override
